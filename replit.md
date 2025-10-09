@@ -1,18 +1,23 @@
-# Python Project
+# FastAPI Project
 
 ## Overview
-A blank Python project ready for custom development.
+A FastAPI web application ready for custom development.
 
 ## Recent Changes
-- **2025-10-09**: Initial project setup with Python 3.11
-  - Created main.py with basic starter code
-  - Configured Python environment
+- **2025-10-09**: Converted to FastAPI web app
+  - Installed FastAPI and Uvicorn
+  - Created basic API with root and health endpoints
+  - Configured server to run on port 5000
 
 ## Project Structure
-- `main.py` - Main Python script entry point
+- `main.py` - FastAPI application with API endpoints
+
+## Available Endpoints
+- `GET /` - Root endpoint, returns welcome message
+- `GET /health` - Health check endpoint
 
 ## How to Run
-The project runs automatically via the configured workflow, or you can run:
+The FastAPI server runs automatically via the configured workflow on port 5000, or you can run:
 ```bash
-python main.py
+uvicorn main:app --host 0.0.0.0 --port 5000
 ```
