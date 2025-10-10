@@ -8,3 +8,4 @@ def user_screen(username):
   return f'''<h1>This is the user page!<h1>
             <p>Hello {username}! How are you?<p> 
             '''
+app.run(debug=True)
