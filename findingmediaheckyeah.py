@@ -30,7 +30,7 @@ def search_for_movie(keywords, page=1) -> dict:
     } 
     response = requests.get(url, params=parameters)
 
-    return response.json()
+    return response.json()['results']
 def search_for_show(keywords, page=1) -> dict:
     url = "https://api.themoviedb.org/3/search/tv"
     parameters = {
@@ -39,7 +39,7 @@ def search_for_show(keywords, page=1) -> dict:
         "page": page
     } 
     response = requests.get(url, params=parameters)
-    return response.json()
+    return response.json()['results']
 def get_genres_for_movies() -> dict:
     url = "https://api.themoviedb.org/3/genre/movie/list"
     parameters = {

@@ -1,0 +1,8 @@
+{% extends "preset.html" %}
+{% block content %}
+{% for dict in media_found %}
+<h5>{{dict['title']}}</h5>
+<a href="{{url_for('media_page', media_name=dict['title'], media_info=dict)}}">Link to {{dict['title']}}</a>
+<p>{{dict}}</p>
+{% endfor %}
+{%endblock%}
