@@ -12,10 +12,10 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Flask Server"
+args = "Flask App"
 
 [[workflows.workflow]]
-name = "Flask Server"
+name = "Flask App"
 author = "agent"
 
 [[workflows.workflow.tasks]]
@@ -32,4 +32,11 @@ channel = "stable-25_05"
 [[ports]]
 localPort = 5000
 externalPort = 80
-exposeLocalhost = true
+
+[[ports]]
+localPort = 44871
+externalPort = 3000
+
+[deployment]
+deploymentTarget = "autoscale"
+run = ["python", "main.py"]

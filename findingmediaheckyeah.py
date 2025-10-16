@@ -126,7 +126,37 @@ class MediaRecommender:
                         chosen_movie = movie_info
                 except:
                     pass
+                    
         return chosen_movie
+    def get_random_movie(self):
+        chosen_movie = None
+        while chosen_movie == None:
+            random_letter = random.choice(string.ascii_lowercase)
+            total_pages = int(search_for_movie(random_letter)['total_pages'])
+            chosen_page = random.randint(1, total_pages)
+            movies_in_chosen_page = search_for_movie(random_letter, page=chosen_page)
+            for movie_info in movies_in_chosen_page['results']:
+                try:
+                    if  len(movie_info['genre_ids']) and movie_info['popularity'] >= 20 and movie_info['vote_average'] >= 6:
+                        chosen_movie = movie_info
+                except:
+                    pass
+                    
+        return chosen_movie
+    def get_random_show(self):
+        chosen_tv = None
+        while chosen_tv == None:
+            random_letter = random.choice(string.ascii_lowercase)
+            total_pages = int(search_for_show(random_letter)['total_pages'])
+            chosen_page = random.randint(1, total_pages)
+            show_in_chosen_page = search_for_show(random_letter, page=chosen_page)
+            for show_info in show_in_chosen_page['results']:
+                try:
+                    if len(show_info['genre_ids']) and show_info['popularity'] >= 20 and show_info['vote_average'] >= 6:
+                        chosen_tv = show_info
+                except:
+                    pass
+        return chosen_tv
     def get_random_show_from_genres(self, genres:list):
         chosen_tv = None
         while chosen_tv == None:
@@ -148,7 +178,23 @@ class MediaRecommender:
             most_liked_genres = self.sort_genres_by_likeability()[random.randint(0,3)]
         recommended_media = [self.get_random_movie_from_genres(most_liked_genres) if random.randint(1,2) == 1 else self.get_random_show_from_genres(most_liked_genres) for i in range(3) ]
         return recommended_media
-    
+    def format_media_dict(self, data):
+        try:
+            title = f"{data['original_title']}" 
+        except:    
+            
+            title = f"{data['name']}" 
+       
+            
+        try:
+            release_date = data['release_date']
+        except:
+            release_date = data['first_air_date']
+        
+        return {'title': title, 'overview': data['overview'], 'rating': data['vote_average'], 'genres': [self.get_genre_from_id(genre) for genre in data['genre_ids']], 'release date': release_date}
+   
+
+
     def format_media_data(self, data):
         try:
             title = f"{data['original_title']}" 

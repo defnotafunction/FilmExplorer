@@ -1,0 +1,43 @@
+<html lang="en">
+    <head>
+        <title>SearchnWatch | Need something to watch? | Best Media Reccomender</title>
+        <h1>Search-n-Watch!</h1>
+        
+        <div>
+            <a href="/">
+                <button>Home</button>
+            </a>
+            |
+            <a href="/find">
+                <button>Find Media</button>
+            </a>
+            |
+            <a href="/search">
+                <button>Browse</button>
+            </a>
+            |
+            <a href="/login">
+                <button>Login</button>
+            </a>
+            |
+            <a href="/help">
+                <button>Need Help?</button>
+            </a>
+            
+            
+        </div>
+        
+    </head>
+    <body>
+        {% if page_name != "Home" %}
+            <h5>{{page_name}}</h5>
+            <i><b><p>{{page_content | default(page_name + " page.")}}</p></b></i>
+        {% endif %}
+        {% if page_name == "Help" %}
+            <a href='https://www.google.com/'><button>Search for answers</button></a>
+        {% endif %}
+        {% block content %}
+        {%endblock%}
+        
+    </body>
+</html>

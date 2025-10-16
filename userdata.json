@@ -1,0 +1,17 @@
+{
+    "Aiden": {
+        "password": "asia3@d",
+        "banned": false,
+        "logged_in": false
+    },
+    "Lee": {
+        "password": "cs2",
+        "banned": false,
+        "logged_in": true
+    },
+    "lll": {
+        "password": "hi",
+        "banned": false,
+        "logged_in": true
+    }
+}

@@ -1,0 +1,19 @@
+{% extends "preset.html" %}
+    {%block content%}
+    <i><h3>{{media_title}}</h3></i>
+    {% for key, info in media_info.items() %}
+        {% if info is iterable and info is not string %}
+        <b><p>{{key | title}}:</p></b>
+        <ul>
+            
+            {% for info2 in info %}
+                <li>{{info2}}</li>
+            {%endfor%}
+        </ul>
+        {% else %}
+        <div>
+            <p><b>{{key | title}}:</b><p> <p>{{info}}</p>
+        </div>
+        {%endif%}
+    {%endfor%}
+    {%endblock%}

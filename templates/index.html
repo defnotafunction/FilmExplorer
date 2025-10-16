@@ -1,36 +1,13 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ title }}</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 50px auto;
-            padding: 20px;
-            background-color: #f4f4f4;
-        }
-        .container {
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        h1 {
-            color: #333;
-        }
-        .message {
-            color: #666;
-            font-size: 18px;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>{{ title }}</h1>
-        <p class="message">{{ message }}</p>
-    </div>
-</body>
-</html>
+{% extends "preset.html" %}
+
+{% block content %}
+<h3>Welcome to Search-n-Watch!</h3>
+    <i><b><p>We bring movies and shows to you!</p></b></i>
+    <a href="/find">
+        <button>Find Media</button>
+    </a>
+    <br>
+    <a href="/search">
+        <button>Browse TV</button>
+    </a>
+{% endblock %}

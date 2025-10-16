@@ -1,0 +1,13 @@
+{% extends "preset.html" %}
+{% block content %}
+<form action="#" method="post">
+    <b><p>Name:</p></b>
+    <p><input type="text", name="username"></p>
+    <b><p>Password:</p></b>
+    <p><input type="text", name="password"></p>
+    <button type="submit" value="submit">Submit</button>
+</form>
+{% if page_name != 'Sign Up' %}
+<a href="/sign-up"><button>Sign up?</button></a>
+{% endif %}
+{%endblock%}
