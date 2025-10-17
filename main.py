@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for
 import json
 from itertools import chain
 app = Flask(__name__)
-from findingmediaheckyeah import MediaRecommender, search_for_movie, search_for_show
+from findingmediaheckyeah import MediaRecommender, search_for_show, get_media_from_id, search_for_movie
 with open('userdata.json') as data:
     user_data = json.load(data)
 def save_user_data(data):
@@ -37,9 +37,10 @@ def search():
 def random_movie():
     random_mov = recommender.format_media_dict(recommender.get_random_movie())
     return render_template('base_media.html', page_name='Random Movie', media_info=random_mov, media_title=random_mov['title'])
-@app.route('/media/<media_name>')
-def media_page(media_name, media_info):
-    return render_template('base_media.html', page_name="Media Page", media_info=media_info, media_name=media_name)
+@app.route('/media/<media_name>/<int:id>')
+def media_page(media_name, id):
+    media_info = recommender.format_media_dict(get_media_from_id(id))
+    return render_template('base_media.html', page_name=f"Media Page - {media_name}", media_info=media_info, media_name=media_name)
 @app.route('/random-show')
 def random_show():
     random_show = recommender.format_media_dict(recommender.get_random_show())

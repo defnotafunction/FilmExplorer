@@ -1,6 +1,7 @@
 {% extends "preset.html" %}
     {%block content%}
     <i><h3>{{media_title}}</h3></i>
+    <img src="https://image.tmdb.org/t/p/w500{{dict['poster_path']}}">
     {% for key, info in media_info.items() %}
         {% if info is iterable and info is not string %}
         <b><p>{{key | title}}:</p></b>

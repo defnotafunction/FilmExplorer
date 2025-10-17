@@ -52,11 +52,22 @@ def get_genres_for_tv() -> dict:
     url = "https://api.themoviedb.org/3/genre/tv/list"
     parameters = {
         "api_key": api_key,
-        
+
     }
     response = requests.get(url, params=parameters)
     return response.json()
-
+def get_media_from_id(id):
+    url = f'https://api.themoviedb.org/3/movie/{id}?api_key={api_key}&external_source=imdb_id'
+    headers = {'accept': 'application/json'}
+    response = requests.get(url, headers=headers)
+    print(response.json())
+    if response.status_code == 200:
+        return response.json()
+    url = f'https://api.themoviedb.org/3/tv/{id}?api_key={api_key}&external_source=imdb_id'
+    headers = {'accept': 'application/json'}
+    response = requests.get(url, headers=headers)
+    return response.json()
+            
 class MediaRecommender:
     def load_media_viewed(self) -> list:
         try:
@@ -190,9 +201,10 @@ class MediaRecommender:
             release_date = data['release_date']
         except:
             release_date = data['first_air_date']
-        
-        return {'title': title, 'overview': data['overview'], 'rating': data['vote_average'], 'genres': [self.get_genre_from_id(genre) for genre in data['genre_ids']], 'release date': release_date}
-   
+        try:
+            return {'title': title, 'overview': data['overview'], 'rating': data['vote_average'], 'genres': [self.get_genre_from_id(genre) for genre in data['genre_ids']], 'release date': release_date, 'id': data['id']}
+        except:
+            return {'title': title, 'overview': data['overview'], 'rating': data['vote_average'], 'genres': [genre['name'] for genre in data['genres']], 'release date': release_date, 'id': data['id'], 'poster_path': data['poster_path']}
 
 
     def format_media_data(self, data):
