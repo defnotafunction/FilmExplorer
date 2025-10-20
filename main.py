@@ -28,22 +28,23 @@ def browse():
         return redirect(url_for('search', keywords=request.form['search']))
     return render_template('browse.html', page_name='Browse', page_content='Browse movies and shows!')
 @app.route('/search')
-def search():
+def search(query):
     #returns a list with media names
     query = request.args.get('search')
     if query:
-        return render_template('search.html', media_found=[recommender.format_media_dict(dct) for dct in chain(search_for_movie(query),search_for_show(query))], page_name='Search')
+        media_found = sorted([recommender.format_media_dict(dct, 'show') if dct in search_for_show(query)['results'] else recommender.format_media_dict(dct, 'movie') for dct in chain(search_for_movie(query)['results'],search_for_show(query)['results'])], reverse=True, key=lambda x: x['rating'])
+        return render_template('search.html', media_found=media_found, page_name='Search')
 @app.route('/random-movie')
 def random_movie():
-    random_mov = recommender.format_media_dict(recommender.get_random_movie())
+    random_mov = recommender.format_media_dict(recommender.get_random_movie(), 'movie')
     return render_template('base_media.html', page_name='Random Movie', media_info=random_mov, media_title=random_mov['title'])
-@app.route('/media/<media_name>/<int:id>')
-def media_page(media_name, id):
-    media_info = recommender.format_media_dict(get_media_from_id(id))
+@app.route('/media/<media_type>/<media_name>/<int:id>')
+def media_page(media_type, media_name, id):
+    media_info = recommender.format_media_dict(get_media_from_id(id, media_type), media_type)
     return render_template('base_media.html', page_name=f"Media Page - {media_name}", media_info=media_info, media_name=media_name)
 @app.route('/random-show')
 def random_show():
-    random_show = recommender.format_media_dict(recommender.get_random_show())
+    random_show = recommender.format_media_dict(recommender.get_random_show(), 'show')
     return render_template('base_media.html', page_name='Random Show', media_info=random_show, media_title=random_show['title'])
 @app.route('/user/<username>')
 def userpage(username):

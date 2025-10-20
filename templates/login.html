@@ -8,6 +8,8 @@
     <button type="submit" value="submit">Submit</button>
 </form>
 {% if page_name != 'Sign Up' %}
-<a href="/sign-up"><button>Sign up?</button></a>
+    <a href="{{ url_for('signup', page_name='Sign Up') }}"><button>Sign up?</button></a>
+{%else%}
+    <a href='/login'>Login in?</a>
 {% endif %}
 {%endblock%}

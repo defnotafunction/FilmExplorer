@@ -30,7 +30,7 @@ def search_for_movie(keywords, page=1) -> dict:
     } 
     response = requests.get(url, params=parameters)
 
-    return response.json()['results']
+    return response.json()
 def search_for_show(keywords, page=1) -> dict:
     url = "https://api.themoviedb.org/3/search/tv"
     parameters = {
@@ -39,7 +39,7 @@ def search_for_show(keywords, page=1) -> dict:
         "page": page
     } 
     response = requests.get(url, params=parameters)
-    return response.json()['results']
+    return response.json()
 def get_genres_for_movies() -> dict:
     url = "https://api.themoviedb.org/3/genre/movie/list"
     parameters = {
@@ -56,8 +56,8 @@ def get_genres_for_tv() -> dict:
     }
     response = requests.get(url, params=parameters)
     return response.json()
-def get_media_from_id(id):
-    url = f'https://api.themoviedb.org/3/movie/{id}?api_key={api_key}&external_source=imdb_id'
+def get_media_from_id(id, type_of_media):
+    url = f'https://api.themoviedb.org/3/{type_of_media}/{id}?api_key={api_key}&external_source=imdb_id'
     headers = {'accept': 'application/json'}
     response = requests.get(url, headers=headers)
     print(response.json())
@@ -175,7 +175,7 @@ class MediaRecommender:
             total_pages = int(search_for_show(random_letter)['total_pages'])
             chosen_page = random.randint(1, total_pages)
             show_in_chosen_page = search_for_show(random_letter, page=chosen_page)
-            for show_info in show_in_chosen_page['results']:
+            for show_info in show_in_chosen_page:
                 try:
                     if all(self.get_genre_from_id(genre_id) in genres for genre_id in show_info['genre_ids']) and len(show_info['genre_ids']) and show_info['popularity'] >= 20 and show_info['vote_average'] >= 6:
                         chosen_tv = show_info
@@ -189,7 +189,7 @@ class MediaRecommender:
             most_liked_genres = self.sort_genres_by_likeability()[random.randint(0,3)]
         recommended_media = [self.get_random_movie_from_genres(most_liked_genres) if random.randint(1,2) == 1 else self.get_random_show_from_genres(most_liked_genres) for i in range(3) ]
         return recommended_media
-    def format_media_dict(self, data):
+    def format_media_dict(self, data, type_of_media):
         try:
             title = f"{data['original_title']}" 
         except:    
@@ -202,9 +202,10 @@ class MediaRecommender:
         except:
             release_date = data['first_air_date']
         try:
-            return {'title': title, 'overview': data['overview'], 'rating': data['vote_average'], 'genres': [self.get_genre_from_id(genre) for genre in data['genre_ids']], 'release date': release_date, 'id': data['id']}
+            return {'title': title, 'overview': data['overview'], 'rating': data['vote_average'], 'genres': [self.get_genre_from_id(genre) for genre in data['genre_ids']], 'release date': release_date, 'id': data['id'], 'poster_path': data['poster_path'], 'type_of_media': type_of_media}
         except:
-            return {'title': title, 'overview': data['overview'], 'rating': data['vote_average'], 'genres': [genre['name'] for genre in data['genres']], 'release date': release_date, 'id': data['id'], 'poster_path': data['poster_path']}
+            return {'title': title, 'overview': data['overview'], 'rating': data['vote_average'], 'genres': [genre['name'] for genre in data['genres']], 'release date': release_date, 'id': data['id'], 'poster_path': data['poster_path'], 'type_of_media': type_of_media}
+        
 
 
     def format_media_data(self, data):
