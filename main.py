@@ -28,7 +28,7 @@ def browse():
         return redirect(url_for('search', keywords=request.form['search']))
     return render_template('browse.html', page_name='Browse', page_content='Browse movies and shows!')
 @app.route('/search')
-def search(query):
+def search():
     #returns a list with media names
     query = request.args.get('search')
     if query:
