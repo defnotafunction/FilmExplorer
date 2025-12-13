@@ -1,10 +1,16 @@
 {% extends "preset.html" %}
 {% block content %}
+<h1>Movies and Shows</h1>
 {% for dict in media_found %}
-<h4>{{dict['title']}} ({{dict['release date'][:4]}})</h4>
-<img src="https://image.tmdb.org/t/p/w92{{dict['poster_path']}}">
-<br>
-<a href="{{url_for('media_page', media_name=dict['title'], id=dict['id'], media_type=dict['type_of_media'])}}">Link to {{dict['title']}}</a>
-<p>{{dict['overview']}}</p>
+<div class='{% if loop.index % 2 == 0 %}media1{% else %}media2{% endif %}'>
+  <h4>{{dict['title']}} ({{dict['release date'][:4]}})</h4>
+  <a href="{{url_for('media_page', media_name=dict['title'], id=dict['id'], media_type=dict['type_of_media'])}}">
+    <img src="https://image.tmdb.org/t/p/w92{{dict['poster_path']}}">
+    <br>
+     {{dict['title']}}
+  </a>
+  <p data-id='search_info'>{{dict['overview']}}</p>
+</div>
 {% endfor %}
+<a href="{{url_for('search', page_num=page_num+1)}}">Next</a>
 {%endblock%}

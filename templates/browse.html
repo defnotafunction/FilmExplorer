@@ -1,6 +1,6 @@
 {% extends "preset.html" %}
 {% block content %}
-<form action="{{url_for('search')}}", method='get'>
+<form action="{{url_for('search', page_num=1)}}", method='get'>
             <label for=searchbar>Search!</label>
             <input type='text' name=search>
         </form>

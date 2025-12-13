@@ -7,9 +7,10 @@
     <p><input type="text", name="password"></p>
     <button type="submit" value="submit">Submit</button>
 </form>
-{% if page_name != 'Sign Up' %}
-    <a href="{{ url_for('signup', page_name='Sign Up') }}"><button>Sign up?</button></a>
+{% if page_name != "Sign Up" %}
+    
+    <a href="{{ url_for('signup', page_name='Sign Up') }}">Sign up?</a>
 {%else%}
-    <a href='/login'>Login in?</a>
+    <a href='/login'>Login?</a>
 {% endif %}
 {%endblock%}

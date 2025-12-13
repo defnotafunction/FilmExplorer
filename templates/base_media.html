@@ -5,7 +5,7 @@
     {% for key, info in media_info.items() %}
         {% if key != 'poster_path' and key != 'type_of_media' %}
             {% if info is iterable and info is not string %}
-            <b><p>{{key | title}}:</p></b>
+            <h4>{{key | title}}:</h4>
             <ul>
                 
                 {% for info2 in info %}
@@ -14,7 +14,7 @@
             </ul>
             {% else %}
             <div>
-                <p><b>{{key | title}}:</b><p> <p>{{info}}</p>
+                <h4><b>{{key | title}}:</b><p> <p>{{info}}</h4>
             </div>
             {%endif%}
         {%endif%}

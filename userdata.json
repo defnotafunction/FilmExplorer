@@ -13,5 +13,10 @@
         "password": "hi",
         "banned": false,
         "logged_in": true
+    },
+    "matt": {
+        "password": "koala",
+        "banned": false,
+        "logged_in": false
     }
 }
