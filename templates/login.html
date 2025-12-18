@@ -1,16 +1,19 @@
 {% extends "preset.html" %}
 {% block content %}
-<form action="#" method="post">
-    <b><p>Name:</p></b>
-    <p><input type="text", name="username"></p>
-    <b><p>Password:</p></b>
-    <p><input type="text", name="password"></p>
-    <button type="submit" value="submit">Submit</button>
-</form>
-{% if page_name != "Sign Up" %}
-    
-    <a href="{{ url_for('signup', page_name='Sign Up') }}">Sign up?</a>
-{%else%}
-    <a href='/login'>Login?</a>
-{% endif %}
+<div class='form-container'>
+    <form action="#" method="post">
+        {{form.hidden_tag()}}
+        {{form.username.label}}
+        {{form.username()}}
+        {{form.password.label}}
+        {{form.password()}}
+        {{form.submit()}}
+        
+        {% if page_name != "Sign Up" %}
+            <a href="{{ url_for('signup', page_name='Sign Up') }}">Sign up?</a>
+        {%else%}
+            <a href='/login'>Login?</a>
+        {% endif %}
+    </form>
+</div>
 {%endblock%}

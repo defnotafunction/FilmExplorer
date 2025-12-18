@@ -1,7 +1,10 @@
 from flask import Flask, render_template, request, redirect, url_for
-import json
 from itertools import chain
 from findingmediaheckyeah import MediaRecommender, search_for_show, get_media_from_id, search_for_movie
+from flask_wtf import FlaskForm
+from wtforms import StringField, PasswordField, SubmitField
+from wtforms.validators import DataRequired, Length
+
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'dev-secret'
 #with open('CodeCanvas/userdata.json') as data:
@@ -16,9 +19,24 @@ def end_app(username):
     # save_user_data(user_data)
     pass
 
+class SignInForm(FlaskForm):
+    username = StringField('Username', validators=[DataRequired('Username needed!'), Length(min=5)])
+    password = PasswordField('Password', validators=[DataRequired('Password needed!'), Length(min=5)])
+    submit = SubmitField('Sign in!')
+
+class LoginForm(FlaskForm):
+    username = StringField('Username', validators=[DataRequired('Username needed!')])
+    password = PasswordField('Password', validators=[DataRequired('Password needed!')])
+    submit = SubmitField('Log in!')
+
+class Searchbar(FlaskForm):
+    query = StringField('Search!', validators=[DataRequired()])
+    search_button = SubmitField('🔍')
+
 queries = []
 recommender = MediaRecommender()
 logged_in = False
+
 @app.route('/home')
 @app.route('/')
 def home():
@@ -34,18 +52,20 @@ def find():
 
 @app.route('/browse', methods=['GET', 'POST'])
 def browse():
+    search_form = Searchbar()
     try:
-        if request.form['search']:
-            return redirect(url_for('search', page_num=1))
+        if search_form.validate_on_submit():
+            queries.append(search_form.query.data)
+            return redirect(url_for('search', page_num=1, query=search_form.query.data))
+            
     finally:
-        return render_template('browse.html', page_name='Browse', page_content='Browse movies and shows!')
+        return render_template('browse.html', page_name='Browse', page_content='Browse movies and shows!', form=search_form)
 
 @app.route('/search/<int:page_num>')
-def search(page_num):
+def search(page_num, query=None):
     
     #  returns a list with media names
     
-    query = request.args.get('search')
     queries.append(request.args.get('search'))
     if query or queries:
         if query is None:
@@ -77,31 +97,33 @@ def userpage(username):
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    form = LoginForm()
     #if request.method == 'POST':
      #   if request.form['username'] in user_data:
       #      if user_data[request.form['username']]['password'] == request.form['password'] and not user_data[request.form['username']]['logged_in']:
        #         user_data[request.form['username']]['logged_in']= True
         #        return redirect(url_for('userpage', username=request.form['username']))
 
-    return render_template('login.html', page_name = 'Login')
+    return render_template('login.html', page_name = 'Login', form=form)
 
 @app.route('/sign-up', methods=['GET', 'POST'])
-
-
 def signup():
-    if request.method == 'POST':
+    signin_form = SignInForm()
+    if signin_form.validate_on_submit():
      #   if request.form['username'] not in user_data:
       #      user_data[request.form['username']] = {'password': request.form['password'], 'banned': False, 'logged_in': True}
        #     save_user_data(user_data)
             return redirect(url_for('userpage', username=request.form['username']))
 
-    return render_template('login.html', page_name = 'Sign Up')
+    return render_template('login.html', page_name = 'Sign Up', form=signin_form)
 
 @app.route('/gag')
 def run_gag():
     return render_template('gag.html')
+    
 @app.errorhandler(404)
 def page_not_found(e):
     return redirect(url_for('home'))
+    
 if __name__ == '__main__':
     app.run(debug=True)

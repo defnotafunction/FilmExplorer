@@ -34,10 +34,6 @@ localPort = 5000
 externalPort = 80
 exposeLocalhost = true
 
-[[ports]]
-localPort = 35321
-externalPort = 3000
-
 [deployment]
 deploymentTarget = "autoscale"
 run = ["python", "main.py"]

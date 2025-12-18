@@ -48,6 +48,28 @@ a {
 
 }
 
+form {
+    display: flex;
+    flex-direction: column;  /* stack fields vertically */
+    gap: 15px;     
+    align-items: flex-start;
+}
+
+input {
+  border: 2px solid white;
+  outline: none;
+}
+
+input:invalid {
+  border-color: red;
+  border-radius: 5rem;
+}
+
+input:valid {
+  border-color: lightgreen;
+  border-radius: 5rem;
+}
+
 .header h1 {
   text-align: center;
   font-size: 5rem;
@@ -218,4 +240,26 @@ p, label, li {
   font-size: 1.6rem;
   color:#dbe08f;
   font-family: "Work Sans", sans-serif;
+}
+
+#submit {
+  background: #fbca1f;
+  font-family: "Work Sans", sans-serif;
+  padding: 0.6em 1.3em;
+  font-weight: 900;
+  font-size: 18px;
+  border: 3px solid black;
+  border-radius: 0.4em;
+  box-shadow: 0.1em 0.1em;
+  cursor: pointer;
+}
+
+#submit:hover {
+  transform: translate(-0.05em, -0.05em);
+  box-shadow: 0.15em 0.15em;
+}
+
+#submit:active {
+  transform: translate(0.05em, 0.05em);
+  box-shadow: 0.05em 0.05em;
 }
