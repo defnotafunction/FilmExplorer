@@ -6,7 +6,6 @@ import csv
 import json
 import datetime
 import os
-import tkinter as tk
 import string
 def fun_game():
     response = requests.get("https://opentdb.com/api.php?amount=50&category=18&difficulty=medium&type=multiple").json()

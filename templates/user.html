@@ -1,4 +1,7 @@
 {% extends "preset.html" %}
 {% block content %}
-<h3>Hello {{username}}!</h3>
+<h3>@{{username}}</h3>
+{% if display_private %}
+<h3>Welcome {{username}}!</h3>
+{% endif %}
 {% endblock %}

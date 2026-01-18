@@ -217,7 +217,7 @@ div.content {
   border: 2rem dotted #4F2D36;
 
 }
-div.content a {
+div.content a, #submit {
   font-family: "Work Sans", sans-serif;
   font-size: 1.5rem;
   color: black;
@@ -226,11 +226,13 @@ div.content a {
   background-color: #A8812A;
   margin: 2rem 2rem;
   display: inline-block;
+  border-radius: 0rem;
  
 }
-div.content a:hover {
+div.content a:hover, #submit:hover {
   background-color: #4F2D36;
   color: white;
+  cursor: pointer;
 }
 div.content form, div.content p {
   padding: 1rem;
@@ -242,24 +244,3 @@ p, label, li {
   font-family: "Work Sans", sans-serif;
 }
 
-#submit {
-  background: #fbca1f;
-  font-family: "Work Sans", sans-serif;
-  padding: 0.6em 1.3em;
-  font-weight: 900;
-  font-size: 18px;
-  border: 3px solid black;
-  border-radius: 0.4em;
-  box-shadow: 0.1em 0.1em;
-  cursor: pointer;
-}
-
-#submit:hover {
-  transform: translate(-0.05em, -0.05em);
-  box-shadow: 0.15em 0.15em;
-}
-
-#submit:active {
-  transform: translate(0.05em, 0.05em);
-  box-shadow: 0.05em 0.05em;
-}

@@ -1,23 +1,11 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, session
 from itertools import chain
 from findingmediaheckyeah import MediaRecommender, search_for_show, get_media_from_id, search_for_movie
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField
 from wtforms.validators import DataRequired, Length
-
-app = Flask(__name__)
-app.config['SECRET_KEY'] = 'dev-secret'
-#with open('CodeCanvas/userdata.json') as data:
- #   user_data = json.load(data)
-
-#def save_user_data(data):
- #   with open('CodeCanvas/userdata.json', 'w') as d:
-  #      json.dump(data, d, indent=4)
-
-def end_app(username):
-    # user_data[username]['logged_in'] = False
-    # save_user_data(user_data)
-    pass
+from extensions import db
+from model import *
 
 class SignInForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired('Username needed!'), Length(min=5)])
@@ -33,9 +21,20 @@ class Searchbar(FlaskForm):
     query = StringField('Search!', validators=[DataRequired()])
     search_button = SubmitField('🔍')
 
-queries = []
+
 recommender = MediaRecommender()
-logged_in = False
+app = Flask(__name__)
+app.config['SECRET_KEY'] = 'dev-secret'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
+app.config['SQLALCHEMY_TRACK_AND_DIFICATIONS'] = False
+db.init_app(app)
+
+def safe_db_add(obj):
+    try:
+        db.session.add(obj)
+        db.session.commit()
+    except Exception:
+        db.session.rollback() 
 
 @app.route('/home')
 @app.route('/')
@@ -55,28 +54,46 @@ def browse():
     search_form = Searchbar()
     try:
         if search_form.validate_on_submit():
-            queries.append(search_form.query.data)
             return redirect(url_for('search', page_num=1, query=search_form.query.data))
-            
+
     finally:
         return render_template('browse.html', page_name='Browse', page_content='Browse movies and shows!', form=search_form)
 
 @app.route('/search/<int:page_num>')
-def search(page_num, query=None):
-    
+def search(page_num):
     #  returns a list with media names
-    
-    queries.append(request.args.get('search'))
-    if query or queries:
-        if query is None:
-            query = [q for q in queries if q is not None][-1]
-        media_found = sorted([recommender.format_media_dict(dct, 'show') if dct in search_for_show(query, page=page_num)['results'] else recommender.format_media_dict(dct, 'movie') for dct in chain(search_for_movie(query, page=page_num)['results'],search_for_show(query, page=page_num)['results'])], reverse=True, key=lambda x: x['rating'])
-        return render_template('search.html', media_found=media_found, page_name='Search', page_num=int(page_num))
+    query = request.args.get('query')
+
+    if not query:
+        return redirect(url_for('home'))
+
+    media_found = sorted(
+        [
+            recommender.format_media_dict(dct, 'show')
+            if dct in search_for_show(query, page=page_num)['results']
+            else recommender.format_media_dict(dct, 'movie')
+            for dct in chain(
+                search_for_movie(query, page=page_num)['results'],
+                search_for_show(query, page=page_num)['results']
+            )
+        ],
+        reverse=True,
+        key=lambda x: x['rating']
+    )
+
+    return render_template(
+        'search.html',
+        media_found=media_found,
+        page_name='Search',
+        page_num=page_num,
+        query=query
+    )
 
 @app.route('/random-movie')
 def random_movie():
     random_mov = recommender.format_media_dict(recommender.get_random_movie(), 'movie')
-    return render_template('base_media.html', page_name='Random Movie', media_info=random_mov, media_title=random_mov['title'])
+    return render_template('base_media.html', page_name='Random Movie', media_info=random_mov,                                                      media_title=random_mov['title']
+    )
 
 @app.route('/media/<media_type>/<media_name>/<int:id>')
 def media_page(media_type, media_name, id):
@@ -90,40 +107,55 @@ def random_show():
 
 @app.route('/user/<username>')
 def userpage(username):
-    #if not user_data[username]['logged_in']:
-     #   return redirect(url_for("login"))
-    #user_data[username]['logged_in'] = False
-    return render_template('user.html', username=username, page_name='Account')
+    if session.get('username') == username:
+        display_private_info = True
+    else:
+        display_private_info = False
+
+    return render_template('user.html', username=username, page_name='Account', display_private=display_private_info)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     form = LoginForm()
-    #if request.method == 'POST':
-     #   if request.form['username'] in user_data:
-      #      if user_data[request.form['username']]['password'] == request.form['password'] and not user_data[request.form['username']]['logged_in']:
-       #         user_data[request.form['username']]['logged_in']= True
-        #        return redirect(url_for('userpage', username=request.form['username']))
+
+    if form.validate_on_submit():
+        user_to_log_in = User.query.filter(User.username == form.username.data,
+                                            User.password == form.password.data).first()
+        if user_to_log_in:
+            session['username'] = user_to_log_in.username
+            return userpage(user_to_log_in.username)
 
     return render_template('login.html', page_name = 'Login', form=form)
 
 @app.route('/sign-up', methods=['GET', 'POST'])
 def signup():
     signin_form = SignInForm()
+
     if signin_form.validate_on_submit():
-     #   if request.form['username'] not in user_data:
-      #      user_data[request.form['username']] = {'password': request.form['password'], 'banned': False, 'logged_in': True}
-       #     save_user_data(user_data)
-            return redirect(url_for('userpage', username=request.form['username']))
+            if User.query.filter(
+                                User.username == signin_form.username.data,
+                                User.password == signin_form.password.data).first() is None:
+                
+
+                user_obj = User(username=signin_form.username.data,
+                                password=signin_form.password.data
+                                )
+                safe_db_add(user_obj)
+                session['username'] = user_obj.username
+                return redirect(url_for('userpage', username=request.form['username']))
 
     return render_template('login.html', page_name = 'Sign Up', form=signin_form)
 
 @app.route('/gag')
 def run_gag():
     return render_template('gag.html')
-    
+
 @app.errorhandler(404)
 def page_not_found(e):
     return redirect(url_for('home'))
-    
-if __name__ == '__main__':
-    app.run(debug=True)
+
+if __name__ == "__main__":
+    with app.app_context():
+        db.create_all()
+    app.run(debug=True, use_reloader=False)
+
