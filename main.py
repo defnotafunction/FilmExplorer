@@ -121,21 +121,21 @@ def login():
 
 @app.route('/sign-up', methods=['GET', 'POST'])
 def signup():
-    signin_form = SignInForm()
+    signup_form = SignUpForm()
 
-    if signin_form.validate_on_submit():
+    if signup_form.validate_on_submit():
             if User.query.filter(
-                                User.username == signin_form.username.data).first() is None:
+                                User.username == signup_form.username.data).first() is None:
                 
 
-                user_obj = User(username=signin_form.username.data,
-                                password=signin_form.password.data
+                user_obj = User(username=signup_form.username.data,
+                                password=signup_form.password.data
                                 )  # create a new user
                 safe_db_add(user_obj)
                 session['username'] = user_obj.username
                 return redirect(url_for('userpage', username=request.form['username']))
 
-    return render_template('login.html', page_name = 'Sign Up', form=signin_form)
+    return render_template('login.html', page_name = 'Sign Up', form=signup_form)
 
 @app.route('/logout')
 def logout():
