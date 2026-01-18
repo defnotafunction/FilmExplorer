@@ -1,32 +1,18 @@
 from flask import Flask, render_template, request, redirect, url_for, session
 from itertools import chain
 from findingmediaheckyeah import MediaRecommender, search_for_show, get_media_from_id, search_for_movie
-from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField
-from wtforms.validators import DataRequired, Length
+from forms import *
 from extensions import db
-from model import *
-
-class SignInForm(FlaskForm):
-    username = StringField('Username', validators=[DataRequired('Username needed!'), Length(min=5)])
-    password = PasswordField('Password', validators=[DataRequired('Password needed!'), Length(min=5)])
-    submit = SubmitField('Sign in!')
-
-class LoginForm(FlaskForm):
-    username = StringField('Username', validators=[DataRequired('Username needed!')])
-    password = PasswordField('Password', validators=[DataRequired('Password needed!')])
-    submit = SubmitField('Log in!')
-
-class Searchbar(FlaskForm):
-    query = StringField('Search!', validators=[DataRequired()])
-    search_button = SubmitField('🔍')
+from models import *
 
 
 recommender = MediaRecommender()
+
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'dev-secret'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
 app.config['SQLALCHEMY_TRACK_AND_DIFICATIONS'] = False
+
 db.init_app(app)
 
 def safe_db_add(obj):
@@ -111,6 +97,9 @@ def userpage(username):
         display_private_info = True
     else:
         display_private_info = False
+    
+    User.query.filter(User.username == username).first_or_404()
+
 
     return render_template('user.html', username=username, page_name='Account', display_private=display_private_info)
 
@@ -141,7 +130,7 @@ def signup():
 
                 user_obj = User(username=signin_form.username.data,
                                 password=signin_form.password.data
-                                )
+                                )  # create a new user
                 safe_db_add(user_obj)
                 session['username'] = user_obj.username
                 return redirect(url_for('userpage', username=request.form['username']))
@@ -159,7 +148,7 @@ def run_gag():
 
 @app.errorhandler(404)
 def page_not_found(e):
-    return redirect(url_for('home'))
+    return render_template('404.html')
 
 if __name__ == "__main__":
     with app.app_context():
