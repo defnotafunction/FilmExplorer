@@ -1,7 +1,10 @@
 {% extends "preset.html" %}
 {% block content %}
+
 <h3>@{{username}}</h3>
 {% if display_private %}
 <h3>Welcome {{username}}!</h3>
 {% endif %}
+<a href="{{url_for('logout')}}">Log out</a>
+
 {% endblock %}

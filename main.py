@@ -116,6 +116,9 @@ def userpage(username):
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    if session.get('username'):
+        return redirect(url_for('userpage', username=session['username']))
+
     form = LoginForm()
 
     if form.validate_on_submit():
@@ -123,7 +126,7 @@ def login():
                                             User.password == form.password.data).first()
         if user_to_log_in:
             session['username'] = user_to_log_in.username
-            return userpage(user_to_log_in.username)
+            return redirect(url_for('userpage', username=session['username']))
 
     return render_template('login.html', page_name = 'Login', form=form)
 
@@ -133,8 +136,7 @@ def signup():
 
     if signin_form.validate_on_submit():
             if User.query.filter(
-                                User.username == signin_form.username.data,
-                                User.password == signin_form.password.data).first() is None:
+                                User.username == signin_form.username.data).first() is None:
                 
 
                 user_obj = User(username=signin_form.username.data,
@@ -145,6 +147,11 @@ def signup():
                 return redirect(url_for('userpage', username=request.form['username']))
 
     return render_template('login.html', page_name = 'Sign Up', form=signin_form)
+
+@app.route('/logout')
+def logout():
+    session.clear() 
+    return redirect(url_for('home'))
 
 @app.route('/gag')
 def run_gag():

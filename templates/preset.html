@@ -1,54 +1,61 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <title>FilmExplorer | Need something to watch? | Best Media Recomender</title>
-        <link href="{{ url_for('static', filename='home.css') }}" rel='stylesheet'/>
-        <link rel="preconnect" href="https://fonts.googleapis.com">
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&family=Work+Sans:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-    </head>
-    <body>
-        <div class='header'>
-            <a href="/">
-                <h1>FilmExplorer</h1>
-            </a>
-            <nav>
-                <ul>
-                    <li>
+
+<head>
+    <title>FilmExplorer | Need something to watch? | Best Media Recomender</title>
+    <link href="{{ url_for('static', filename='home.css') }}" rel='stylesheet' />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&family=Work+Sans:ital,wght@0,100..900;1,100..900&display=swap"
+        rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+
+<body>
+    <div class='header'>
+        <a href="/">
+            <h1>FilmExplorer</h1>
+        </a>
+        <nav>
+            <ul>
+                <li>
                     <a href="/find">
                         Find Media
                     </a>
-                    </li>
-                    <li>
+                </li>
+                <li>
                     <a href="/browse">
                         Browse
                     </a>
-                    </li>
-                    <li>
+                </li>
+                <li>
                     <a href="/login">
                         Login
                     </a>
-                    </li>
-                    <li>
+                </li>
+                <li>
                     <a href="/help">
                         Need Help?
                     </a>
-                    </li>
-                </ul>
-            </nav>
-        </div>
-        <div class='content'>
-            {% if page_name != "Home" %}
-                <h4>{{page_name}}</h4>
-                <i><b><h5>{{page_content | default("")}}</h5></b></i>
-            {% endif %}
-            {% if page_name == "Help" %}
-                <a href='https://www.google.com/' target='_blank'>Search for answers</a>
-                <a href='/gag'>Don't click here</a>
-            {% endif %}
-            {% block content %}
-            {%endblock%}
-        </div>
-    </body>
+                </li>
+            </ul>
+        </nav>
+    </div>
+    <div class='content'>
+        {% if page_name != "Home" %}
+        <h4>{{page_name}}</h4>
+        <i><b>
+                <h5>{{page_content | default("")}}</h5>
+            </b></i>
+        {% endif %}
+        {% if page_name == "Help" %}
+        <a href='https://www.google.com/' target='_blank'>Search for answers</a>
+        <a href='/gag'>Don't click here</a>
+        {% endif %}
+        {% block content %}
+        {%endblock%}
+    </div>
+</body>
+
 </html>
