@@ -68,6 +68,7 @@ def get_media_from_id(id, type_of_media):
     return response.json()
             
 class MediaRecommender:
+
     def load_media_viewed(self) -> list:
         try:
             with open(os.path.join('userdata', 'mediaviewed.csv')) as mediafile:
@@ -195,6 +196,44 @@ class MediaRecommender:
                     pass
         return chosen_tv
     
+    def get_media_from_query(self, query, page_num, _filter='vote_average'):
+        PER_PAGE = 5
+
+        # Convert in-app page → API page
+        api_page = page_num // PER_PAGE + 1
+        slice_index = page_num % PER_PAGE
+
+        # Fetch only the needed API page
+        movies_found = search_for_movie(query, page=api_page)['results']
+        shows_found = search_for_show(query, page=api_page)['results']
+
+        # Mark type before merging (faster than checking later)
+        for m in movies_found:
+            m['_type'] = 'movie'
+
+        for s in shows_found:
+            s['_type'] = 'show'
+
+        # Merge and sort ONCE
+        combined = sorted(
+            chain(movies_found, shows_found),
+            key=lambda x: x.get(_filter, 0),
+            reverse=True
+        )
+
+        # Get only 5 items for this in-app page
+        start = slice_index * PER_PAGE
+        end = start + PER_PAGE
+        page_slice = combined[start:end]
+
+        # Format results
+        media_on_page = [
+            self.format_media_dict(item, item['_type'])
+            for item in page_slice
+        ]
+
+        return media_on_page
+
     def recommend_media(self, specific=False):
         if specific:
             most_liked_genres = self.sort_genres_by_likeability()[:3]
@@ -209,16 +248,16 @@ class MediaRecommender:
         except:    
             
             title = f"{data['name']}" 
-       
-            
+         
         try:
             release_date = data['release_date']
         except:
             release_date = data['first_air_date']
+
         try:
-            return {'title': title, 'overview': data['overview'], 'rating': data['vote_average'], 'genres': [self.get_genre_from_id(genre) for genre in data['genre_ids']], 'release date': release_date, 'id': data['id'], 'poster_path': data['poster_path'], 'type_of_media': type_of_media}
+            return {'title': title, 'overview': data['overview'], 'rating': f"{data['vote_average']}/10", 'genres': [self.get_genre_from_id(genre) for genre in data['genre_ids']], 'release date': release_date, 'id': data['id'], 'poster_path': data['poster_path'], 'type of media': type_of_media}
         except:
-            return {'title': title, 'overview': data['overview'], 'rating': data['vote_average'], 'genres': [genre['name'] for genre in data['genres']], 'release date': release_date, 'id': data['id'], 'poster_path': data['poster_path'], 'type_of_media': type_of_media}
+            return {'title': title, 'overview': data['overview'], 'rating': f"{data['vote_average']}/10", 'genres': [genre['name'] for genre in data['genres']], 'release date': release_date, 'id': data['id'], 'poster_path': data['poster_path'], 'type of media': type_of_media}
         
 
 

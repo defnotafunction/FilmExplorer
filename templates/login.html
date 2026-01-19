@@ -8,12 +8,15 @@
         {{form.password.label}}
         {{form.password()}}
         {{form.submit()}}
-        
+
+        <p class="error">{{message}}</p>
+
         {% if page_name != "Sign Up" %}
-            <a href="{{ url_for('signup', page_name='Sign Up') }}">Sign up?</a>
+        <a href="{{ url_for('signup', page_name='Sign Up') }}">Sign up?</a>
         {%else%}
-            <a href='/login'>Login?</a>
+        <a href='/login'>Login?</a>
         {% endif %}
+
     </form>
 </div>
 {%endblock%}

@@ -1,23 +1,32 @@
 {% extends "preset.html" %}
-    {%block content%}
-    <i><h3>{{media_title}}</h3></i>
-    <img src="https://image.tmdb.org/t/p/w500{{media_info['poster_path']}}">
-    {% for key, info in media_info.items() %}
-        {% if key != 'poster_path' and key != 'type_of_media' %}
-            {% if info is iterable and info is not string %}
-            <h4>{{key | title}}:</h4>
-            <ul>
-                
-                {% for info2 in info %}
-                    <li>{{info2}}</li>
-                {%endfor%}
-            </ul>
-            {% else %}
-            <div>
-                <h4><b>{{key | title}}:</b><p> <p>{{info}}</h4>
-            </div>
-            {%endif%}
-        {%endif%}
+{%block content%}
+<i>
+    <h3>{{media_title}}</h3>
+</i>
+<img src="https://image.tmdb.org/t/p/w500{{media_info['poster_path']}}">
+{% for key, info in media_info.items() %}
+{% if key != 'poster_path' %}
+
+{% if info is iterable and info is not string %}
+<h4>{{key | title}}:</h4>
+<ul>
+
+    {% for info2 in info %}
+    <li>{{info2}}</li>
     {%endfor%}
-    <b><p>Type of Media - {{media_info['type_of_media'] | title}}</p></b>
-    {%endblock%}
+</ul>
+{% else %}
+<div>
+    <h4><b>{{key | title}}:</b>
+        {% if key != "type of media" %}
+        <p>{{info}}</p>
+        {%else%}
+        <p>{{info | title}}</p>
+        {% endif %}
+    </h4>
+</div>
+{%endif%}
+
+{%endif%}
+{%endfor%}
+{%endblock%}

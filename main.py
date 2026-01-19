@@ -13,6 +13,7 @@ app.config['SECRET_KEY'] = 'dev-secret'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
 app.config['SQLALCHEMY_TRACK_AND_DIFICATIONS'] = False
 
+
 db.init_app(app)
 
 def safe_db_add(obj):
@@ -47,26 +48,14 @@ def browse():
 
 @app.route('/search/<int:page_num>')
 def search(page_num):
-    #  returns a list with media names
+    # returns a list with media names
     query = request.args.get('query')
 
     if not query:
         return redirect(url_for('home'))
 
-    media_found = sorted(
-        [
-            recommender.format_media_dict(dct, 'show')
-            if dct in search_for_show(query, page=page_num)['results']
-            else recommender.format_media_dict(dct, 'movie')
-            for dct in chain(
-                search_for_movie(query, page=page_num)['results'],
-                search_for_show(query, page=page_num)['results']
-            )
-        ],
-        reverse=True,
-        key=lambda x: x['rating']
-    )
-
+    media_found = recommender.get_media_from_query(query, page_num)
+    
     return render_template(
         'search.html',
         media_found=media_found,
@@ -109,19 +98,24 @@ def login():
         return redirect(url_for('userpage', username=session['username']))
 
     form = LoginForm()
+    error_message = ''
 
     if form.validate_on_submit():
         user_to_log_in = User.query.filter(User.username == form.username.data,
                                             User.password == form.password.data).first()
         if user_to_log_in:
             session['username'] = user_to_log_in.username
+            session.permanent = True
             return redirect(url_for('userpage', username=session['username']))
+        
+        error_message = 'Incorrect username or password'
 
-    return render_template('login.html', page_name = 'Login', form=form)
+    return render_template('login.html', page_name = 'Login', form=form, message=error_message)
 
 @app.route('/sign-up', methods=['GET', 'POST'])
 def signup():
     signup_form = SignUpForm()
+    error_message = ''
 
     if signup_form.validate_on_submit():
             if User.query.filter(
@@ -135,7 +129,9 @@ def signup():
                 session['username'] = user_obj.username
                 return redirect(url_for('userpage', username=request.form['username']))
 
-    return render_template('login.html', page_name = 'Sign Up', form=signup_form)
+            error_message = 'Username already in use!'
+            
+    return render_template('login.html', page_name = 'Sign Up', form=signup_form, message=error_message)
 
 @app.route('/logout')
 def logout():
@@ -153,5 +149,6 @@ def page_not_found(e):
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()
+
     app.run(debug=True, use_reloader=False)
 
