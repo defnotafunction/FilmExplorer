@@ -1,7 +1,14 @@
 from extensions import db
+from flask_login import UserMixin
 
-class User(db.Model):
+class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.Text, unique=True)
-    password = db.Column(db.Text)
+    username = db.Column(db.String(150), unique=True, index=True)
+    hashed_password = db.Column(db.String(150))
+    liked_titles = db.relationship("Title", backref='user', cascade="all, delete-orphan") 
 
+class Title(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    media_id = db.Column(db.Integer, unique=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
+    media_type = db.Column(db.String)

@@ -1,6 +1,7 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField
+from wtforms import StringField, PasswordField, SubmitField, HiddenField
 from wtforms.validators import DataRequired, Length
+
 
 class SignUpForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired('Username needed!'), Length(min=5)])
@@ -15,3 +16,6 @@ class LoginForm(FlaskForm):
 class Searchbar(FlaskForm):
     query = StringField('Search!', validators=[DataRequired()])
     search_button = SubmitField('🔍')
+
+class LikeButton(FlaskForm):
+    submit = SubmitField('Like')

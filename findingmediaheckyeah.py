@@ -47,6 +47,7 @@ def get_genres_for_movies() -> dict:
     }
     response = requests.get(url, params=parameters)
     return response.json()
+
 def get_genres_for_tv() -> dict:
     url = "https://api.themoviedb.org/3/genre/tv/list"
     parameters = {
@@ -55,16 +56,20 @@ def get_genres_for_tv() -> dict:
     }
     response = requests.get(url, params=parameters)
     return response.json()
+
 def get_media_from_id(id, type_of_media):
+   
     url = f'https://api.themoviedb.org/3/{type_of_media}/{id}?api_key={api_key}&external_source=imdb_id'
     headers = {'accept': 'application/json'}
     response = requests.get(url, headers=headers)
-    print(response.json())
+
     if response.status_code == 200:
         return response.json()
+    
     url = f'https://api.themoviedb.org/3/tv/{id}?api_key={api_key}&external_source=imdb_id'
     headers = {'accept': 'application/json'}
     response = requests.get(url, headers=headers)
+    
     return response.json()
             
 class MediaRecommender:
@@ -196,33 +201,35 @@ class MediaRecommender:
                     pass
         return chosen_tv
     
-    def get_media_from_query(self, query, page_num, _filter='vote_average'):
+    def get_media_from_query(self, query, page_num, _filter='popularity'):
         PER_PAGE = 5
+        required_items = page_num * PER_PAGE  # how many items we need to reach this app page
 
-        # Convert in-app page → API page
-        api_page = page_num // PER_PAGE + 1
-        slice_index = page_num % PER_PAGE
+        movies_found = []
+        shows_found = []
+        api_page = 1
 
-        # Fetch only the needed API page
-        movies_found = search_for_movie(query, page=api_page)['results']
-        shows_found = search_for_show(query, page=api_page)['results']
+        # Keep fetching until we have enough items to cover the requested app page
+        while len(movies_found) + len(shows_found) < required_items:
+            movies_found += search_for_movie(query, page=api_page)['results']
+            shows_found += search_for_show(query, page=api_page)['results']
+            api_page += 1
 
-        # Mark type before merging (faster than checking later)
+        # Mark type
         for m in movies_found:
             m['_type'] = 'movie'
-
         for s in shows_found:
             s['_type'] = 'show'
 
-        # Merge and sort ONCE
+        # Merge and sort globally
         combined = sorted(
             chain(movies_found, shows_found),
-            key=lambda x: x.get(_filter, 0),
+            key=lambda x: float(x.get(_filter, 0)),  # ensure floats
             reverse=True
         )
 
-        # Get only 5 items for this in-app page
-        start = slice_index * PER_PAGE
+        # Slice exactly the items for this app page
+        start = (page_num - 1) * PER_PAGE
         end = start + PER_PAGE
         page_slice = combined[start:end]
 
