@@ -1,5 +1,4 @@
 import requests
-from bs4 import BeautifulSoup
 import random
 from itertools import chain
 import csv
@@ -7,6 +6,8 @@ import json
 import datetime
 import os
 import string
+from concurrent.futures import ThreadPoolExecutor
+
 def fun_game():
     response = requests.get("https://opentdb.com/api.php?amount=50&category=18&difficulty=medium&type=multiple").json()
     while True:
@@ -73,6 +74,19 @@ def get_media_from_id(id, type_of_media):
     return response.json()
             
 class MediaRecommender:
+    def __init__(self):
+        """Initialize with cached genre lookups."""
+        self._genre_cache = None
+
+    def _get_all_genres(self):
+        if self._genre_cache is None:
+            movies_genres = get_genres_for_movies().get('genres', [])
+            tv_genres = get_genres_for_tv().get('genres', [])
+            
+            self._genre_cache = {}
+            for genre in chain(movies_genres, tv_genres):
+                self._genre_cache[genre['id']] = genre['name']
+        return self._genre_cache
 
     def load_media_viewed(self) -> list:
         try:
@@ -93,9 +107,10 @@ class MediaRecommender:
             csv_writer = csv.writer(mediafile)
             csv_writer.writerow(['title','user_rating','public_rating','genre1','genre2','genre3', 'date_finished'])
             
-    def get_genre_from_id(self, genre_id: int) -> list:
+    def get_genre_from_id(self, genre_id: int) -> str:
         try:
-            return [id_dictionary['name'] for id_dictionary in chain(get_genres_for_movies()['genres'], get_genres_for_tv()['genres']) if genre_id == id_dictionary['id']][0]
+            genres_map = self._get_all_genres()
+            return genres_map.get(genre_id, None)
         except:
             return None
             
@@ -133,6 +148,7 @@ class MediaRecommender:
             genre3 = media_info['genre_ids'][2] 
         except:
             genre = None
+
         self.media_viewed.append([media_info['title'], user_rating, media_info['vote_average'], genre1,genre2,genre3, datetime.datetime.today().strftime('MONTH-%m DAY-%d, YEAR-%Y')])
         self.increase_genre_weights(media_info['genre_ids'][0], media_info['genre_ids'][1], media_info['genre_ids'][2])
         
@@ -203,37 +219,41 @@ class MediaRecommender:
     
     def get_media_from_query(self, query, page_num, _filter='popularity'):
         PER_PAGE = 5
-        required_items = page_num * PER_PAGE  # how many items we need to reach this app page
-
-        movies_found = []
-        shows_found = []
+        
+        combined = []
         api_page = 1
 
-        # Keep fetching until we have enough items to cover the requested app page
-        while len(movies_found) + len(shows_found) < required_items:
-            movies_found += search_for_movie(query, page=api_page)['results']
-            shows_found += search_for_show(query, page=api_page)['results']
-            api_page += 1
+        # Fetch pages until we have enough items for this page
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            while len(combined) < page_num * PER_PAGE:
+                
+                # concurrently call apis
+                movie_future = executor.submit(search_for_movie, query, api_page)
+                show_future = executor.submit(search_for_show, query, api_page)
 
-        # Mark type
-        for m in movies_found:
-            m['_type'] = 'movie'
-        for s in shows_found:
-            s['_type'] = 'show'
+                movie_page = movie_future.result().get('results', [])
+                show_page = show_future.result().get('results', [])
+            
+                if not movie_page and not show_page:
+                    break
+                
+                for m in movie_page:
+                    m['_type'] = 'movie'
+                    combined.append(m)
 
-        # Merge and sort globally
-        combined = sorted(
-            chain(movies_found, shows_found),
-            key=lambda x: float(x.get(_filter, 0)),  # ensure floats
-            reverse=True
-        )
+                for s in show_page:
+                    s['_type'] = 'show'
+                    combined.append(s)
 
-        # Slice exactly the items for this app page
+                api_page += 1
+
+        
+        combined.sort(key=lambda x: float(x.get(_filter, 0)), reverse=True)
+
+        # slice exactly the items for this app page
         start = (page_num - 1) * PER_PAGE
         end = start + PER_PAGE
         page_slice = combined[start:end]
-
-        # Format results
         media_on_page = [
             self.format_media_dict(item, item['_type'])
             for item in page_slice
@@ -246,7 +266,9 @@ class MediaRecommender:
             most_liked_genres = self.sort_genres_by_likeability()[:3]
         else:
             most_liked_genres = self.sort_genres_by_likeability()[random.randint(0,3)]
+        
         recommended_media = [self.get_random_movie_from_genres(most_liked_genres) if random.randint(1,2) == 1 else self.get_random_show_from_genres(most_liked_genres) for i in range(3) ]
+        
         return recommended_media
     
     def format_media_dict(self, data, type_of_media):
@@ -262,9 +284,27 @@ class MediaRecommender:
             release_date = data['first_air_date']
 
         try:
-            return {'title': title, 'overview': data['overview'], 'rating': f"{data['vote_average']}/10", 'genres': [self.get_genre_from_id(genre) for genre in data['genre_ids']], 'release date': release_date, 'id': data['id'], 'poster_path': data['poster_path'], 'type of media': type_of_media}
+            return {
+                'title': title,
+                'overview': data['overview'],
+                'rating': f"{data['vote_average']}/10",
+                'genres': [self.get_genre_from_id(genre) for genre in data['genre_ids']],
+                'release date': release_date,
+                'id': data['id'],
+                'poster_path': data['poster_path'],
+                'type of media': type_of_media
+                }
         except:
-            return {'title': title, 'overview': data['overview'], 'rating': f"{data['vote_average']}/10", 'genres': [genre['name'] for genre in data['genres']], 'release date': release_date, 'id': data['id'], 'poster_path': data['poster_path'], 'type of media': type_of_media}
+            return {
+                    'title': title,
+                    'overview': data['overview'],
+                    'rating': f"{data['vote_average']}/10",
+                    'genres': [genre['name'] for genre in data['genres']],
+                    'release date': release_date,
+                    'id': data['id'],
+                    'poster_path': data['poster_path'],
+                    'type of media': type_of_media
+                    }
         
 
 
