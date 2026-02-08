@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, request, redirect, url_for, session, abort
 from itertools import chain
 from findingmediaheckyeah import MediaRecommender, search_for_show, get_media_from_id, search_for_movie
 from forms import *
@@ -7,7 +7,7 @@ from models import *
 from werkzeug.security import generate_password_hash, check_password_hash
 from tools import *
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
-
+from sqlalchemy import select
 
 
 recommender = MediaRecommender()
@@ -25,7 +25,7 @@ db.init_app(app)
 
 @login_manager.user_loader
 def load_user(user_id):
-    return User.query.get(int(user_id))
+    return db.session.get(User, int(user_id))
 
 def safe_db_add(obj):
     try:
@@ -106,13 +106,16 @@ def random_show():
 
 @app.route('/user/<username>')
 def userpage(username):
-    if session.get('username') == username:
-        display_private_info = True
-    else:
+    if current_user is None:
         display_private_info = False
+    elif current_user:
+        if current_user.username == username:
+            display_private_info = True
+
     
     # checks if user exists otherwise throws 404 error
-    User.query.filter(User.username == username).first_or_404()
+    if not check_if_user_exists(username):
+        abort(404)
 
     liked_titles = []
     for media in current_user.liked_titles:
