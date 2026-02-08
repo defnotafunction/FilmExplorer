@@ -19,3 +19,6 @@ class Searchbar(FlaskForm):
 
 class LikeButton(FlaskForm):
     submit = SubmitField('Like')
+
+class RemoveLike(FlaskForm):
+    submit = SubmitField('Remove')

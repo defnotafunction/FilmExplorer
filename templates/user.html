@@ -7,8 +7,18 @@
 <a href="{{url_for('logout')}}">Log out</a>
 {% endif %}
 <h4>Liked Titles:</h4>
-{% for dict in liked_titles %}
+{% for dict in liked_media %}
 <div class='{% if loop.index % 2 == 0 %}media1{% else %}media2{% endif %}'>
+    <!-- Remove button -->
+    {% if current_user.is_authenticated and current_user.username == username %}
+    <form method="POST"
+        action="{{ url_for('remove_liked', username=username, media_id=dict['id'], media_type=dict['type of media']) }}">
+        {{remove_like_form.hidden_tag()}}
+        <button type="submit">Remove</button>
+    </form>
+
+    {% endif %}
+
     <h4>{{dict['title']}} ({{dict['release date'][:4]}})</h4>
     <a href="{{url_for('media_page', media_name=dict['title'], id=dict['id'], media_type=dict['type of media'])}}">
         <img src="https://image.tmdb.org/t/p/w92{{dict['poster_path']}}">

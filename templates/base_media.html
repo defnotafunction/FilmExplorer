@@ -1,5 +1,5 @@
 {% extends "preset.html" %}
-{%block content%}
+{% block content %}
 <i>
     <h3>{{media_title}}</h3>
 </i>
@@ -8,10 +8,14 @@
 
 <img src="https://image.tmdb.org/t/p/w500{{media_info['poster_path']}}">
 
+<!-- Like - Remove Like forms -->
+{% if current_user %}
 <form method="POST">
     {{ like_form.hidden_tag() }}
     {{ like_form.submit() }}
 </form>
+
+{% endif %}
 
 {% for key, info in media_info.items() %}
 {% if key != 'poster_path' %}
