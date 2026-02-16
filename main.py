@@ -125,6 +125,8 @@ def random_show():
                             media_info=random_show,
                             media_title=random_show['title'])
 
+
+
 @app.route('/user/<username>')
 def userpage(username):
     remove_like_form = RemoveLike()
@@ -187,6 +189,7 @@ def signup():
                 user_obj = User(username=signup_form.username.data,
                                 hashed_password=generate_password_hash(signup_form.password.data)
                                 )  # create a new user
+                
                 safe_db_add(user_obj)  # add user to data base
                 login_user(user_obj)  # login user
                 

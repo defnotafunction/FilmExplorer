@@ -7,6 +7,13 @@ import datetime
 import os
 import string
 from concurrent.futures import ThreadPoolExecutor
+import numpy as np
+from sklearn.neighbors import NearestNeighbors
+from dotenv import load_dotenv
+
+load_dotenv()
+
+api_key = os.getenv("TMDB_API_KEY")
 
 def fun_game():
     response = requests.get("https://opentdb.com/api.php?amount=50&category=18&difficulty=medium&type=multiple").json()
@@ -19,7 +26,8 @@ def fun_game():
         user_answer = int(input('Answer Question: '))
         print(f"{'Correct!' if answers[user_answer-1] == question['correct_answer'] else f'Wrong, the answer was ' + question['correct_answer']}!")
 
-api_key = "b17b5fc6d4925775f336ee364676badd"
+
+
 def search_for_movie(keywords, page=1) -> dict:
     url = "https://api.themoviedb.org/3/search/movie"
 
@@ -31,6 +39,7 @@ def search_for_movie(keywords, page=1) -> dict:
     response = requests.get(url, params=parameters)
 
     return response.json()
+
 def search_for_show(keywords, page=1) -> dict:
     url = "https://api.themoviedb.org/3/search/tv"
     parameters = {
@@ -40,6 +49,7 @@ def search_for_show(keywords, page=1) -> dict:
     } 
     response = requests.get(url, params=parameters)
     return response.json()
+
 def get_genres_for_movies() -> dict:
     url = "https://api.themoviedb.org/3/genre/movie/list"
     parameters = {
@@ -75,8 +85,8 @@ def get_media_from_id(id, type_of_media):
             
 class MediaRecommender:
     def __init__(self):
-        """Initialize with cached genre lookups."""
         self._genre_cache = None
+        self.model = NearestNeighbors(metric='cosine')
 
     def _get_all_genres(self):
         if self._genre_cache is None:
@@ -223,7 +233,7 @@ class MediaRecommender:
         combined = []
         api_page = 1
 
-        # Fetch pages until we have enough items for this page
+        # fetch pages until we have enough items for this page
         with ThreadPoolExecutor(max_workers=2) as executor:
             while len(combined) < page_num * PER_PAGE:
                 
@@ -305,8 +315,19 @@ class MediaRecommender:
                     'poster_path': data['poster_path'],
                     'type of media': type_of_media
                     }
-        
 
+    def encode_genres(self, media_dict):
+        return [int(gen in media_dict['genres']) for gen in self._genre_cache]
+
+    def get_vector_from_media_dict(self, media_dict):
+        genres = self.encode_genres(media_dict)
+
+        return np.array(
+                [  # Items to consider / compare
+            media_dict['rating'],
+            *genres
+                ]
+            )
 
     def format_media_data(self, data):
         try:
