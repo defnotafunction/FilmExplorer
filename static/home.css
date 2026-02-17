@@ -87,7 +87,6 @@ input:valid {
   color: #D8AE2E;
   text-align: left;
   margin-left: 5rem;
-  /* move H1 inward */
   margin-top: 0;
 }
 
@@ -309,4 +308,17 @@ li {
 
 .error {
   color: red;
+}
+
+footer {
+  text-align: center;
+  width: 100%;
+  padding: 10px;
+  background-color: #79552F;
+  font-size: 0.9rem;
+}
+
+.email {
+  color: #dbe08f;
+  text-decoration: underline;
 }

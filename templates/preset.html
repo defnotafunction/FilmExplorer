@@ -51,12 +51,28 @@
             </b></i>
         {% endif %}
         {% if page_name == "Help" %}
-        <a href='https://www.google.com/' target='_blank'>Search for answers</a>
-        <a href='/gag'>Don't click here</a>
+        <p>Something wrong, or do you want more information about the creator?</p>
+        <p>Contact <a class="email" href="mailto:aykendevs@gmail.com">aykendevs@gmail.com</a></p>
         {% endif %}
+        <!-- Where other html files extend off of: -->
         {% block content %}
         {%endblock%}
-    </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div>
+            {% for category, message in messages %}
+            <p class="{{ category }}">{{ message }}</p>
+            {% endfor %}
+
+            {% endif %}
+            {% endwith %}
+        </div>
+        <footer>
+            <p>Contact: <a class="email" href="mailto:aykendevs@gmail.com">aykendevs@gmail.com</a></p>
+            <p>Website created by Nkola Katambwa</p>
+        </footer>
+
 </body>
 
 </html>

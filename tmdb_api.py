@@ -1,8 +1,6 @@
 import requests
-import random
 from itertools import chain
 import os
-import string
 from concurrent.futures import ThreadPoolExecutor
 import numpy as np
 from sklearn.neighbors import NearestNeighbors
@@ -56,13 +54,30 @@ def _get_genres_for_tv() -> dict:
     response = requests.get(url, params=parameters)
     return response.json()
 
-def get_media_from_id(media_id: int, type_of_media: str):
+def _get_all_languages():
+    url = f"https://api.themoviedb.org/3/configuration/languages?api_key={api_key}"
+    response = requests.get(url)
+    return response.json()
+
+def check_if_id_movie(media_id: int) -> bool:
     """
-    Get a media dictionary from its ID
+    Checks if a media_id belongs to a movie.
     
-    :param media_id: The id of the media
-    :param type_of_media: Description
-    :return: Dictionary containing media metadata
+    :param media_id: The ID of the media.
+    :return: True if the media_id belongs to a movie; otherwise, it returns false.
+    """
+    url = f'https://api.themoviedb.org/3/movie/{media_id}?api_key={api_key}&external_source=imdb_id'
+    headers = {'accept': 'application/json'}
+    response = requests.get(url, headers=headers)
+    return response.status_code == 200
+
+def get_media_from_id(media_id: int, type_of_media: str = 'movie'):
+    """
+    Get a media dictionary from its ID.
+    
+    :param media_id: The id of the media.
+    :param type_of_media: Type of media ('movie' or 'tv').
+    :return: Dictionary containing media metadata.
     """
 
     url = f'https://api.themoviedb.org/3/{type_of_media}/{media_id}?api_key={api_key}&external_source=imdb_id'
@@ -94,12 +109,14 @@ def discover_movies(page_number: int = 1) -> dict:
         "include_video": "false",
         "language": "en-US",
         "page": page_number,
-        "sort_by": "popularity.desc"
+        "sort_by": "popularity.desc",
+        "vote_average.gte": 7,
+        "vote_count.gte": 500
     }
 
     response = requests.get(url, params=params)
     
-    return response
+    return response.json()
 
 def discover_shows(page_number: int = 1):
     """
@@ -117,23 +134,48 @@ def discover_shows(page_number: int = 1):
         "include_video": "false",
         "language": "en-US",
         "page": page_number,
-        "sort_by": "popularity.desc"
+        "sort_by": "popularity.desc",
+        "vote_average.gte": 7,
+        "vote_count.gte": 500
     }
 
     response = requests.get(url, params=params)
     
-    return response
+    return response.json()
 
 # MEDIA RECOMMENDER / FINDER CLASS
 
 class MediaRecommender:
-    def __init__(self):
+    def __init__(self, model_dataset_pages: int = 500):
         """Initialize a MediaRecommender instance"""
-        self._genre_cache = None
-        self.model = NearestNeighbors(metric='cosine')
+        self._genre_cache = self._get_all_genres()
+        self._language_cache = _get_all_languages()
+        self._model = NearestNeighbors(metric='cosine')
+        self.model_data_dir = os.path.join(BASE_DIR, 'cache', "model.npz")
+        
+        if os.path.exists(self.model_data_dir):
+            self._media_vectors, self._media_ids = self._load_media_arrays()
+        else:
+            self._media_vectors, self._media_ids = self.get_vectorized_media(model_dataset_pages)
+        
+        self.fit_model()
+        self._save_media_arrays()
+
+    def _save_media_arrays(self) -> None:
+        np.savez_compressed(self.model_data_dir,
+                    vectors=self._media_vectors,
+                    ids=np.array(self._media_ids, dtype=np.int64))
+
+
+    def _load_media_arrays(self) -> tuple[list, list]:
+        arrays = np.load(self.model_data_dir)
+        vectors = arrays['vectors']
+        ids = arrays['ids'].tolist()
+        assert len(ids) == vectors.shape[0]
+        return vectors, ids
 
     def _get_all_genres(self):
-        if self._genre_cache is None:
+        if not hasattr(self, '_genre_cache') or self._genre_cache is None:
             movies_genres = _get_genres_for_movies().get('genres', [])
             tv_genres = _get_genres_for_tv().get('genres', [])
             
@@ -154,41 +196,6 @@ class MediaRecommender:
             return genres_map.get(genre_id, None)
         except:
             return None
-
-    # TODO: Remove this method once recommender is fully implemented.     
-    def get_random_movie(self):
-        chosen_movie = None
-        while chosen_movie == None:
-            random_letter = random.choice(string.ascii_lowercase)
-            total_pages = int(_search_for_movie(random_letter)['total_pages'])
-            chosen_page = random.randint(1, total_pages)
-            movies_in_chosen_page = _search_for_movie(random_letter, page=chosen_page)
-            for movie_info in movies_in_chosen_page['results']:
-                try:
-                    if  len(movie_info['genre_ids']) and movie_info['popularity'] >= 20 and movie_info['vote_average'] >= 6:
-                        chosen_movie = movie_info
-                except:
-                    pass
-                    
-        return chosen_movie
-    
-    # TODO: Remove this method once recommender is fully implemented.
-    def get_random_show(self):
-        chosen_tv = None
-        while chosen_tv == None:
-            random_letter = random.choice(string.ascii_lowercase)
-            total_pages = int(_search_for_show(random_letter)['total_pages'])
-            chosen_page = random.randint(1, total_pages)
-            show_in_chosen_page = _search_for_show(random_letter, page=chosen_page)
-            
-            for show_info in show_in_chosen_page['results']:
-                try:
-                    if len(show_info['genre_ids']) and show_info['popularity'] >= 20 and show_info['vote_average'] >= 6:
-                        chosen_tv = show_info
-                except:
-                    pass
-
-        return chosen_tv
         
     def get_media_from_query(self, query: str, page_num: int, search_filter: int ='popularity') -> list:
         """
@@ -247,7 +254,7 @@ class MediaRecommender:
         return media_on_page
 
     
-    def format_media_dict(self, data: dict, type_of_media: str):
+    def format_media_dict(self, data: dict, type_of_media: str) -> dict:
         """
         Simplfies a dictionary of media.
 
@@ -289,34 +296,84 @@ class MediaRecommender:
                     'type of media': type_of_media
                     }
 
-    def _encode_genres(self, media_dict):
-        return [int(gen in media_dict['genres']) for gen in self._genre_cache]
+    def _encode_genres(self, media_dict) -> list:  # One hot encoding
+        if 'genres' in media_dict:
+            genres_to_check = [genre['id'] for genre in media_dict['genres']]
+        else:
+            genres_to_check = media_dict['genre_ids']
 
-    def vectorize_media_dict(self, media_dict):
+        return [int(gen in genres_to_check) for gen in self._genre_cache]
+
+    def _encode_languages(self, media_dict):  # One hot encoding
+        return [int(media_dict["original_language"] == lang["iso_639_1"]) for lang in self._language_cache]
+
+    # TMDB isn't specific with its genres (no anime genre).
+    # So, I added other features such as language and whether it's an adult film
+    def vectorize_media_dict(self, media_dict) -> np.array:
         genres = self._encode_genres(media_dict)
+        language = self._encode_languages(media_dict)
 
         return np.array(
-                [  # Items to consider / compare.
-            float(media_dict['rating'][:-3]),  # Remove the /10 at the end of the string.
-            *genres
+                [  # Features to weigh in and compare.  
+            *genres,
+            *language,
+            int(media_dict['adult'])
                 ]
             )
     
-    def _get_media(self, max_pages: int = 2000) -> list[dict]:
+    def _get_media(self, max_pages: int) -> list[dict]:
         media = []
         for i in range(max_pages):
-            for mov in discover_movies(page_number=i)['results']:
+            discovered_mov  = discover_movies(page_number=i+1)
+            discovered_shows = discover_shows(page_number=i+1)
+
+            for mov in discovered_mov['results']:
                 media.append(mov)
 
-            for show in discover_shows(page_number=i)['results']:
+            for show in discovered_shows['results']:
                 media.append(show)
 
         return media
 
-    def get_vectorized_media(self, max_pages=2000):
-        return []
+    def get_vectorized_media(self, max_pages: int) -> tuple[np.array, list]:
+        """
+        Gets two parallel lists, one array containing the vectors, the second contains the corresponding ID.
 
-    
+        :param max_pages: The maximum amount of pages used in requesting the TMDB's API.
+        :return: Returns two parallel lists.
+        """
+        media_vectors = []
+        media_ids = []
+        
+        for m in self._get_media(max_pages):
+            media_vectors.append(self.vectorize_media_dict(m))
+            media_ids.append(m['id'])
+
+        return np.array(media_vectors), media_ids
+
+    def fit_model(self) -> None:
+        self._model.fit(self._media_vectors)
+
+    def recommend(self, liked_ids: list[int], n_recommendations: int = 5) -> list[int]:
+        """
+        Returns TMDB IDs of recommended movies based on liked IDs.
+
+        :param liked_ids: List of user's liked media's IDs.
+        :param n_recommendations: Number of recommendations to return.
+        :return: List of recommended TMDB IDs.
+        """
+        liked_media = [get_media_from_id(_id) for _id in liked_ids]
+        liked_vectors = [self.vectorize_media_dict(m) for m in liked_media]
+        liked_vector_mean = np.mean(liked_vectors, axis = 0)
+
+        # Liked movies themselves may appear in the neighbors, so +len(liked_ids).
+        distances, indices = self._model.kneighbors([liked_vector_mean], n_neighbors=n_recommendations + len(liked_ids)) 
+        all_rec_ids = [self._media_ids[i] for i in indices[0]]
+       
+        recommended_ids = set([mid for mid in all_rec_ids if mid not in liked_ids])
+        recommended_ids = list(recommended_ids)
+
+        return recommended_ids[:n_recommendations]
 
 
     def _format_media_data(self, data: dict):

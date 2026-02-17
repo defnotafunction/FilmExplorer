@@ -5,10 +5,10 @@ Film Explorer is a website that helps curious users find movies and shows that f
 - Authentication and Authorization - Secure user sign up and login using `flask-SQLAlchemy` and `flask-login`.
 - Database - Powered by SQLALCHEMY.
 - Frontend - Built with HTML, CSS, and Jinja2.
-- Backend - Flask + Python handles users and API requests. 
-- Media Browsing - Browse movies and shows powered by TMDB API.
+- Backend - Flask + Python handles users, API requests, routes, and logic. 
+- Media Browsing - Browse movies and shows. Powered by TMDB API.
 - Liking - Add and remove shows and movies from your "Liked Titles" list. Powered by SQLALCHEMY.
-- Recommender System - Recommends media based on what you've liked. Powered by `scikit-learn`'s KNeighborsClassifer.
+- Recommender System - Recommends media based on what you've liked. Powered by `scikit-learn`'s NearestNeighbors.
 
 ## Project Structure
 
@@ -46,5 +46,5 @@ Film Explorer is a website that helps curious users find movies and shows that f
 This project is not available for public use or distribution.
 
 ## Author
-Name: Nkola Katambwa
-Email Account: aykendevs@gmail.com
+- Name: Nkola Katambwa
+- Email Account: aykendevs@gmail.com
