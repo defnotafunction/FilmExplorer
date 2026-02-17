@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, session, abort
 from itertools import chain
-from findingmediaheckyeah import MediaRecommender, get_media_from_id
+from tmdb_api import MediaRecommender, get_media_from_id
 from forms import *
 from extensions import db
 from models import *
@@ -134,7 +134,7 @@ def random_show():
 @app.route('/user/<username>')
 def userpage(username):
     remove_like_form = RemoveLike()
-    # checks if user exists otherwise throws 404 error
+    
     if not check_if_user_exists(username):
         abort(404)
 
@@ -147,7 +147,10 @@ def userpage(username):
     else:
         display_private_info = False
 
+    # LOADING UP USER'S LIKED MEDIA.
+
     liked_media = []
+    
     for media in viewed_user.liked_media:
         media_dict = recommender.format_media_dict(
             data=get_media_from_id(media.media_id, media.media_type),

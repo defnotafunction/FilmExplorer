@@ -28,7 +28,7 @@ class Searchbar(FlaskForm):
 
 class LikeButton(FlaskForm):
     """
-    Like form. Used to like media.
+    Like form. Add media to your liked media list.
     """
     submit = SubmitField('Like')
 
