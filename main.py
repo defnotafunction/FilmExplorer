@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, session, abort
 from itertools import chain
-from findingmediaheckyeah import MediaRecommender, search_for_show, get_media_from_id, search_for_movie
+from findingmediaheckyeah import MediaRecommender, get_media_from_id
 from forms import *
 from extensions import db
 from models import *
@@ -12,11 +12,13 @@ from sqlalchemy import select
 
 recommender = MediaRecommender()
 
+# App configuration.
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'dev-secret'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
 app.config['SQLALCHEMY_TRACK_AND_DIFICATIONS'] = False
 
+# Initalizing login_manager.
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = "login"
@@ -28,7 +30,7 @@ def load_user(user_id):
     return db.session.get(User, int(user_id))
 
 
-
+# Default page.
 @app.route('/home')
 @app.route('/')
 def home():
@@ -59,7 +61,7 @@ def browse():
 
 @app.route('/search/<int:page_num>')
 def search(page_num):
-    # returns a list with media names
+    # Returns a list with media names.
     query = request.args.get('query')
 
     if not query:
@@ -87,31 +89,33 @@ def random_movie():
                             media_title=random_mov['title']
                         )
 
-@app.route('/media/<media_type>/<media_name>/<int:id>', methods=['GET', 'POST'])
-def media_page(media_type, media_name, id):
+@app.route('/media/<media_type>/<media_name>/<int:media_id>', methods=['GET', 'POST'])
+def media_page(media_type, media_name, media_id):
     like_form = LikeButton()
 
     if (like_form.validate_on_submit()
-        and like_form.submit.data
-        and current_user.is_authenticated):
+        and like_form.submit.data):
         new_media_obj = Media(user_id=current_user.id,
-                          media_id=id,
+                          media_id=media_id,
                           media_type=media_type
                           )
-        
+
         current_user.liked_media.append(new_media_obj)
         db.session.commit()
 
     media_info = recommender.format_media_dict(
-        get_media_from_id(id, media_type),
+        get_media_from_id(media_id, media_type),
           media_type
           )
     
     return render_template('base_media.html',
                             page_name=f"Media Page - {media_name}", 
-                            media_info=media_info, media_name=media_name,
+                            media_info=media_info,
+                            media_name=media_name,
+                            media_id = media_id,
                             like_form=like_form,
-                            current_user = current_user
+                            current_user = current_user,
+                            check_media_obj_in_user_liked = check_media_obj_in_user_liked
                             )
 
 @app.route('/random-show')

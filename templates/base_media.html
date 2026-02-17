@@ -9,11 +9,16 @@
 <img src="https://image.tmdb.org/t/p/w500{{media_info['poster_path']}}">
 
 <!-- Like - Remove Like forms -->
-{% if current_user %}
+{% if current_user.is_authenticated %}
+
+{% if check_media_obj_in_user_liked(media_id, current_user) %}
+<p>Movie already liked</p>
+{%else%}
 <form method="POST">
     {{ like_form.hidden_tag() }}
     {{ like_form.submit() }}
 </form>
+{% endif %}
 
 {% endif %}
 

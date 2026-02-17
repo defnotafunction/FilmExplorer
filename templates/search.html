@@ -4,7 +4,7 @@
 {% for dict in media_found %}
 <div class='{% if loop.index % 2 == 0 %}media1{% else %}media2{% endif %}'>
   <h4>{{dict['title']}} ({{dict['release date'][:4]}})</h4>
-  <a href="{{url_for('media_page', media_name=dict['title'], id=dict['id'], media_type=dict['type of media'])}}">
+  <a href="{{url_for('media_page', media_name=dict['title'], media_id=dict['id'], media_type=dict['type of media'])}}">
     <img src="https://image.tmdb.org/t/p/w92{{dict['poster_path']}}">
     <br>
     {{dict['title']}}

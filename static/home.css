@@ -62,7 +62,6 @@ a {
 form {
   display: flex;
   flex-direction: column;
-  /* stack fields vertically */
   gap: 15px;
   align-items: flex-start;
 }

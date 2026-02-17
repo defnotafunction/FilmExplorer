@@ -1,9 +1,6 @@
 import requests
 import random
 from itertools import chain
-import csv
-import json
-import datetime
 import os
 import string
 from concurrent.futures import ThreadPoolExecutor
@@ -15,20 +12,10 @@ load_dotenv()
 
 api_key = os.getenv("TMDB_API_KEY")
 
-def fun_game():
-    response = requests.get("https://opentdb.com/api.php?amount=50&category=18&difficulty=medium&type=multiple").json()
-    while True:
-        question = random.choice(response['results'])
-        print(question['question'])
-        answers = list(chain(question['incorrect_answers'], [question['correct_answer']]))
-        random.shuffle(answers)
-        print('\n'.join([f"{idx+1} - {choice}" for idx, choice in enumerate(answers)]))
-        user_answer = int(input('Answer Question: '))
-        print(f"{'Correct!' if answers[user_answer-1] == question['correct_answer'] else f'Wrong, the answer was ' + question['correct_answer']}!")
 
+# API CALLING FUNCTIONS
 
-
-def search_for_movie(keywords, page=1) -> dict:
+def _search_for_movie(keywords, page=1) -> dict:
     url = "https://api.themoviedb.org/3/search/movie"
 
     parameters = {
@@ -40,7 +27,7 @@ def search_for_movie(keywords, page=1) -> dict:
 
     return response.json()
 
-def search_for_show(keywords, page=1) -> dict:
+def _search_for_show(keywords, page=1) -> dict:
     url = "https://api.themoviedb.org/3/search/tv"
     parameters = {
         "api_key": api_key,
@@ -50,7 +37,7 @@ def search_for_show(keywords, page=1) -> dict:
     response = requests.get(url, params=parameters)
     return response.json()
 
-def get_genres_for_movies() -> dict:
+def _get_genres_for_movies() -> dict:
     url = "https://api.themoviedb.org/3/genre/movie/list"
     parameters = {
         "api_key": api_key,
@@ -59,7 +46,7 @@ def get_genres_for_movies() -> dict:
     response = requests.get(url, params=parameters)
     return response.json()
 
-def get_genres_for_tv() -> dict:
+def _get_genres_for_tv() -> dict:
     url = "https://api.themoviedb.org/3/genre/tv/list"
     parameters = {
         "api_key": api_key,
@@ -68,126 +55,113 @@ def get_genres_for_tv() -> dict:
     response = requests.get(url, params=parameters)
     return response.json()
 
-def get_media_from_id(id, type_of_media):
-   
-    url = f'https://api.themoviedb.org/3/{type_of_media}/{id}?api_key={api_key}&external_source=imdb_id'
+def get_media_from_id(media_id: int, type_of_media: str):
+    """
+    Docstring for get_media_from_id
+    
+    :param media_id: The id of the media
+    :param type_of_media: Description
+    :return: Dictionary containing media metadata
+    """
+
+    url = f'https://api.themoviedb.org/3/{type_of_media}/{media_id}?api_key={api_key}&external_source=imdb_id'
     headers = {'accept': 'application/json'}
     response = requests.get(url, headers=headers)
 
-    if response.status_code == 200:
+    if response.status_code == 200:  # Return the response if the id belongs to a movie.
         return response.json()
     
-    url = f'https://api.themoviedb.org/3/tv/{id}?api_key={api_key}&external_source=imdb_id'
+    url = f'https://api.themoviedb.org/3/tv/{media_id}?api_key={api_key}&external_source=imdb_id'
     headers = {'accept': 'application/json'}
     response = requests.get(url, headers=headers)
     
     return response.json()
-            
+
+def discover_movies(page_number: int = 1) -> dict:
+    """
+    Return a dictionary of movies
+    
+    :param page_number: Page number parameter for the API
+    :return: A dictionary, with a "result" key filled with dictionaries 
+    with the metadata of the movie. 
+    """
+    url = "https://api.themoviedb.org/3/discover/movie"
+
+    params = {
+        "api_key": api_key,
+        "include_adult": "false",
+        "include_video": "false",
+        "language": "en-US",
+        "page": page_number,
+        "sort_by": "popularity.desc"
+    }
+
+    response = requests.get(url, params=params)
+    
+    return response
+
+def discover_shows(page_number: int = 1):
+    """
+    Return a dictionary of movies
+    
+    :param page_number: Page number parameter for the API
+    :return: A dictionary, with a "result" key filled with dictionaries 
+    with the metadata of the show. 
+    """
+    url = "https://api.themoviedb.org/3/discover/movie"
+
+    params = {
+        "api_key": api_key,
+        "include_adult": "false",
+        "include_video": "false",
+        "language": "en-US",
+        "page": page_number,
+        "sort_by": "popularity.desc"
+    }
+
+    response = requests.get(url, params=params)
+    
+    return response
+
+# MEDIA RECOMMENDER / FINDER CLASS
+
 class MediaRecommender:
     def __init__(self):
+        """Initialize a MediaRecommender instance"""
         self._genre_cache = None
         self.model = NearestNeighbors(metric='cosine')
 
     def _get_all_genres(self):
         if self._genre_cache is None:
-            movies_genres = get_genres_for_movies().get('genres', [])
-            tv_genres = get_genres_for_tv().get('genres', [])
+            movies_genres = _get_genres_for_movies().get('genres', [])
+            tv_genres = _get_genres_for_tv().get('genres', [])
             
             self._genre_cache = {}
             for genre in chain(movies_genres, tv_genres):
                 self._genre_cache[genre['id']] = genre['name']
         return self._genre_cache
-
-    def load_media_viewed(self) -> list:
-        try:
-            with open(os.path.join('userdata', 'mediaviewed.csv')) as mediafile:
-                rows = csv.reader(mediafile)
-                return list(rows)
-        except FileNotFoundError:
-            self.create_media_viewed()
-            
-    def save_media_viewed(self) -> None:
-        with open(os.path.join('userdata', 'mediaviewed.csv'), 'w') as mediafile:
-            csv_writer = csv.writer(mediafile)
-            for row in self.media_viewed:
-                csv_writer.writerow(row)
-                
-    def create_media_viewed(self) -> None:
-        with open(os.path.join('userdata', 'mediaviewed.csv'), 'w') as mediafile:
-            csv_writer = csv.writer(mediafile)
-            csv_writer.writerow(['title','user_rating','public_rating','genre1','genre2','genre3', 'date_finished'])
-            
+    
     def get_genre_from_id(self, genre_id: int) -> str:
+        """
+        Returns the genre based on the id
+
+        :param genre_id: Description
+        :return: Description
+        """
         try:
             genres_map = self._get_all_genres()
             return genres_map.get(genre_id, None)
         except:
             return None
-            
-    def create_user_liked_genres_file(self):
-        with open(os.path.join('userdata', 'user_liked_genres.json'), 'w') as genres:
-            json.dump({info['name']: random.random() for genre in chain(get_genres_for_movies().values(), get_genres_for_tv().values()) for info in genre }, genres, indent=4)
-            
-    def load_user_liked_genres_file(self):
-        try:
-            with open(os.path.join('userdata', 'user_liked_genres.json'), 'r') as genres:
-                return json.load(genres)
-        except FileNotFoundError:
-            self.create_user_liked_genres_file()
-            
-    def save_user_liked_genres_file(self):
-        with open(os.path.join('userdata', 'user_liked_genres.json'), 'w') as genres:
-            json.dump(self.user_genre_ratings, genres, indent=4)
-            
-    def decrease_all_genre_weights(self, *exceptions, rate=0.01):
-        for genre, weight in self.user_genre_ratings.items():
-            if genre not in exceptions:
-                self.user_genre_ratings[genre] -= random.random()*rate
-                
-    def increase_genre_weights(self, *genres, rate=0.1):
-        for genre in genres:
-            self.user_genre_ratings[genre] += random.random()*rate
-    
-    def change_based_user_review(self, media_info:dict, user_rating: float, enjoyable: bool):
-        genre1 = media_info['genre_ids'][0]
-        try:
-            genre2 = media_info['genre_ids'][1]
-        except:
-            genre2 = None
-        try:
-            genre3 = media_info['genre_ids'][2] 
-        except:
-            genre = None
 
-        self.media_viewed.append([media_info['title'], user_rating, media_info['vote_average'], genre1,genre2,genre3, datetime.datetime.today().strftime('MONTH-%m DAY-%d, YEAR-%Y')])
-        self.increase_genre_weights(media_info['genre_ids'][0], media_info['genre_ids'][1], media_info['genre_ids'][2])
-        
-    def sort_genres_by_likeability(self):
-        return [genre for genre in reversed(sorted(self.user_genre_ratings, key=lambda x: self.user_genre_ratings[x]))]
-        
-    def get_random_movie_from_genres(self, genres:list):
-        chosen_movie = None
-        while chosen_movie is None:
-            random_letter = random.choice(string.ascii_lowercase)
-            total_pages = int(search_for_movie(random_letter)['total_pages'])
-            chosen_page = random.randint(1, total_pages)
-            movies_in_chosen_page = search_for_movie(random_letter, page=chosen_page)
-            for movie_info in movies_in_chosen_page['results']:
-                try:
-                    if all(self.get_genre_from_id(genre_id) in genres for genre_id in movie_info['genre_ids']) and len(movie_info['genre_ids']) and movie_info['popularity'] >= 20 and movie_info['vote_average'] >= 6:
-                        chosen_movie = movie_info
-                except:
-                    pass
-                    
-        return chosen_movie
-    
+    # TODO: Remove this method once recommender is fully implemented.     
     def get_random_movie(self):
         chosen_movie = None
         while chosen_movie == None:
             random_letter = random.choice(string.ascii_lowercase)
-            total_pages = int(search_for_movie(random_letter)['total_pages'])
+            total_pages = int(_search_for_movie(random_letter)['total_pages'])
             chosen_page = random.randint(1, total_pages)
-            movies_in_chosen_page = search_for_movie(random_letter, page=chosen_page)
+            movies_in_chosen_page = _search_for_movie(random_letter, page=chosen_page)
             for movie_info in movies_in_chosen_page['results']:
                 try:
                     if  len(movie_info['genre_ids']) and movie_info['popularity'] >= 20 and movie_info['vote_average'] >= 6:
@@ -197,49 +171,47 @@ class MediaRecommender:
                     
         return chosen_movie
     
+    # TODO: Remove this method once recommender is fully implemented.
     def get_random_show(self):
         chosen_tv = None
         while chosen_tv == None:
             random_letter = random.choice(string.ascii_lowercase)
-            total_pages = int(search_for_show(random_letter)['total_pages'])
+            total_pages = int(_search_for_show(random_letter)['total_pages'])
             chosen_page = random.randint(1, total_pages)
-            show_in_chosen_page = search_for_show(random_letter, page=chosen_page)
+            show_in_chosen_page = _search_for_show(random_letter, page=chosen_page)
+            
             for show_info in show_in_chosen_page['results']:
                 try:
                     if len(show_info['genre_ids']) and show_info['popularity'] >= 20 and show_info['vote_average'] >= 6:
                         chosen_tv = show_info
                 except:
                     pass
+
         return chosen_tv
         
-    def get_random_show_from_genres(self, genres:list):
-        chosen_tv = None
-        while chosen_tv == None:
-            random_letter = random.choice(string.ascii_lowercase)
-            total_pages = int(search_for_show(random_letter)['total_pages'])
-            chosen_page = random.randint(1, total_pages)
-            show_in_chosen_page = search_for_show(random_letter, page=chosen_page)
-            for show_info in show_in_chosen_page:
-                try:
-                    if all(self.get_genre_from_id(genre_id) in genres for genre_id in show_info['genre_ids']) and len(show_info['genre_ids']) and show_info['popularity'] >= 20 and show_info['vote_average'] >= 6:
-                        chosen_tv = show_info
-                except:
-                    pass
-        return chosen_tv
-    
-    def get_media_from_query(self, query, page_num, _filter='popularity'):
+    def get_media_from_query(self, query: str, page_num: int, search_filter: int ='popularity') -> list:
+        """
+        Get a list of media to appear on page.
+        
+        :param query: The query used to search for media.
+        :param page_num: The page number the user is currently on.
+        :param _filter: The type of filter used to filter the results.
+        :return: A list with the media that will appear on the page.
+        """
+
         PER_PAGE = 5
         
         combined = []
         api_page = 1
 
-        # fetch pages until we have enough items for this page
+        # Fetch pages until we have enough items for this page.
         with ThreadPoolExecutor(max_workers=2) as executor:
             while len(combined) < page_num * PER_PAGE:
                 
-                # concurrently call apis
-                movie_future = executor.submit(search_for_movie, query, api_page)
-                show_future = executor.submit(search_for_show, query, api_page)
+                # Concurrently call apis.
+
+                movie_future = executor.submit(_search_for_movie, query, api_page)
+                show_future = executor.submit(_search_for_show, query, api_page)
 
                 movie_page = movie_future.result().get('results', [])
                 show_page = show_future.result().get('results', [])
@@ -258,12 +230,14 @@ class MediaRecommender:
                 api_page += 1
 
         
-        combined.sort(key=lambda x: float(x.get(_filter, 0)), reverse=True)
+        combined.sort(key=lambda x: float(x.get(search_filter, 0)), reverse=True)
 
-        # slice exactly the items for this app page
+        # Slice exactly the items for this app page.
+
         start = (page_num - 1) * PER_PAGE
         end = start + PER_PAGE
         page_slice = combined[start:end]
+
         media_on_page = [
             self.format_media_dict(item, item['_type'])
             for item in page_slice
@@ -271,21 +245,19 @@ class MediaRecommender:
 
         return media_on_page
 
-    def recommend_media(self, specific=False):
-        if specific:
-            most_liked_genres = self.sort_genres_by_likeability()[:3]
-        else:
-            most_liked_genres = self.sort_genres_by_likeability()[random.randint(0,3)]
-        
-        recommended_media = [self.get_random_movie_from_genres(most_liked_genres) if random.randint(1,2) == 1 else self.get_random_show_from_genres(most_liked_genres) for i in range(3) ]
-        
-        return recommended_media
     
-    def format_media_dict(self, data, type_of_media):
+    def format_media_dict(self, data: dict, type_of_media: str):
+        """
+        Simplfies a dictionary of media.
+
+        :param data: The dictionary of the media.
+        :param type_of_media: The type of the media (movie or show).
+        :return: The formatted, processed media dict.
+        """
+
         try:
             title = f"{data['original_title']}" 
-        except:    
-            
+        except:           
             title = f"{data['name']}" 
          
         try:
@@ -316,27 +288,29 @@ class MediaRecommender:
                     'type of media': type_of_media
                     }
 
-    def encode_genres(self, media_dict):
+    def _encode_genres(self, media_dict):
         return [int(gen in media_dict['genres']) for gen in self._genre_cache]
 
-    def get_vector_from_media_dict(self, media_dict):
-        genres = self.encode_genres(media_dict)
+    def vectorize_media_dict(self, media_dict):
+        genres = self._encode_genres(media_dict)
 
         return np.array(
-                [  # Items to consider / compare
-            media_dict['rating'],
+                [  # Items to consider / compare.
+            float(media_dict['rating'][:-3]),  # Remove the /10 at the end of the string.
             *genres
                 ]
             )
+    
+    def get_items(self, max_pages=2000):
+        for i in range(max_pages):
+            pass
 
-    def format_media_data(self, data):
+    def _format_media_data(self, data: dict):
         try:
             title = f"{data['original_title']}" 
         except:    
-            
             title = f"{data['name']}" 
        
-            
         try:
             release_date = data['release_date']
         except:
