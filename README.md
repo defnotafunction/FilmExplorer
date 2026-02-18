@@ -1,5 +1,5 @@
 # Film Explorer
-Film Explorer is a website that helps curious users find movies and shows that fits their preferences.
+Film Explorer is a website that helps curious users find movies and shows that fit their preferences.
 
 ## Features
 - Authentication and Authorization - Secure user sign up and login using `flask-SQLAlchemy` and `flask-login`.
