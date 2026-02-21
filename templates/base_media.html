@@ -8,7 +8,7 @@
 
 <img src="https://image.tmdb.org/t/p/w500{{media_info['poster_path']}}">
 
-<!-- Like - Remove Like forms -->
+<!-- Like form -->
 {% if current_user.is_authenticated %}
 
 {% if check_media_obj_in_user_liked(media_id, current_user) %}

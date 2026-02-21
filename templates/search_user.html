@@ -1,0 +1,14 @@
+{% extends "preset.html" %}
+{% block content %}
+<div class='tab-container'>
+    <a class='tab' href="{{url_for('search_media', query=query, page_num=1)}}">Media</a>
+</div>
+
+<h4>Users</h4>
+{% for user in fetched_users %}
+
+<a href="{{url_for('userpage', username=user.username)}}">{{user.username}}</a>
+
+{% endfor %}
+
+{%endblock%}

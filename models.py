@@ -6,6 +6,7 @@ class User(UserMixin, db.Model):
     username = db.Column(db.String(150), unique=True, index=True)
     hashed_password = db.Column(db.String(150))
     liked_media = db.relationship("Media", backref='user', cascade="all, delete-orphan") 
+    # friends = db.relationship("User", backref='user', cascade="all, delete-orphan")
 
 class Media(db.Model):
     id = db.Column(db.Integer, primary_key=True)

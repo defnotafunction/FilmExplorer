@@ -50,10 +50,20 @@ def check_media_obj_in_user_liked(media_id: int, user_obj) -> bool:
     """
     Returns a bool based on if a media object (identified by it's id) is in user's liked titles.
     
-    :param media_id: The id of the media object
+    :param media_id: The id of the media object.
     :param user_obj: The user object that is going to have their "liked_media" attribute checked.
-    :type user_obj: SQLAlchemy.Column
-    :return: Returns True if a media object is in user_obj's liked media else False
+    :type user_obj: SQLAlchemy.Column.
+    :return: Returns True if a media object is in user_obj's liked media else False.
     """
     return any(media.media_id == media_id for media in user_obj.liked_media)
 
+def get_users_from_query(query: str) -> list[User]:
+    """
+    Returns a bool based on if a media object (identified by it's id) is in user's liked titles.
+    :param query: The text used to fetch users with similar usernames.
+    :return: Returns True if a media object is in user_obj's liked media else False
+    """
+    fetched_users = db.session.execute(
+        select(User).where(User.username.contains(query))
+    ).scalars().all()
+    return fetched_users

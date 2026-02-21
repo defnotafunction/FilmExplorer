@@ -1,9 +1,9 @@
 {% extends "preset.html" %}
 {% block content %}
-<form action="{{url_for('search', page_num=1)}}", method='get'>
-            {{form.hidden_tag()}}
-            {{form.query.label}}
-            {{form.query()}}
-            {{form.search_button()}}
+<form method="POST">
+    {{form.hidden_tag()}}
+    {{form.query.label}}
+    {{form.query()}}
+    {{form.search_button()}}
 </form>
 {% endblock %}

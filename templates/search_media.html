@@ -1,5 +1,10 @@
 {% extends "preset.html" %}
 {% block content %}
+
+<div class='tab-container'>
+  <a class='tab' href="{{url_for('search_user', query=query)}}">Users</a>
+</div>
+
 <h1>Movies and Shows</h1>
 {% for dict in media_found %}
 <div class='{% if loop.index % 2 == 0 %}media1{% else %}media2{% endif %}'>
@@ -14,8 +19,8 @@
 {% endfor %}
 
 {% if page_num != 1 %}
-<a href="{{url_for('search', page_num=page_num-1, query=query)}}">Previous</a>
+<a href="{{url_for('search_media', page_num=page_num-1, query=query)}}">Previous</a>
 {% endif %}
 
-<a href="{{url_for('search', page_num=page_num+1, query=query)}}">Next</a>
+<a href="{{url_for('search_media', page_num=page_num+1, query=query)}}">Next</a>
 {%endblock%}

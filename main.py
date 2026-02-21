@@ -7,13 +7,13 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from tools import *
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from sqlalchemy import select
-
+import os
 
 recommender = MediaRecommender()
 
 # App configuration.
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'dev-secret'
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
 app.config['SQLALCHEMY_TRACK_AND_DIFICATIONS'] = False
 
@@ -72,30 +72,37 @@ def recommended_media():
 @app.route('/browse', methods=['GET', 'POST'])
 def browse():
     search_form = Searchbar()
-    try:
-        if search_form.validate_on_submit():
-            return redirect(url_for('search', page_num=1, query=search_form.query.data))
 
-    finally:
-        return render_template(
-                                'browse.html',
-                                page_name='Browse',
-                                page_content='Browse movies and shows!',
-                                form=search_form
-                                )
+    if search_form.validate_on_submit():
+        return redirect(url_for(
+                                'search_media',
+                                page_num=1,
+                                query=search_form.query.data))
 
-@app.route('/search/<int:page_num>')
-def search(page_num):
+    return render_template(
+                            'browse.html',
+                            page_name='Browse',
+                            page_content='Browse movies and shows!',
+                            form=search_form
+                            )
+
+@app.route('/users/<query>')
+def search_user(query):
+    feteched_users = get_users_from_query(query)
+    
+    return render_template('search_user.html',
+                            query=query,
+                           fetched_users=feteched_users)
+
+
+@app.route('/search/<query>/<int:page_num>')
+def search_media(query, page_num):
     # Returns a list with media names.
-    query = request.args.get('query')
-
-    if not query:
-        return redirect(url_for('home'))
 
     media_found = recommender.get_media_from_query(query, page_num)
     
     return render_template(
-        'search.html',
+        'search_media.html',
         media_found=media_found,
         page_name='Search',
         page_num=page_num,
@@ -108,7 +115,8 @@ def random_movie():
                                                 type_of_media='movie'
                                                 )
     
-    return render_template('base_media.html',
+    return render_template(
+                            'base_media.html',
                             page_name='Random Movie',
                             media_info=random_mov,
                             media_title=random_mov['title']
@@ -208,10 +216,10 @@ def signup():
             if not check_if_user_exists(signup_form.username.data):
                 user_obj = User(username=signup_form.username.data,
                                 hashed_password=generate_password_hash(signup_form.password.data)
-                                )  # create a new user
+                                )  # Create a new user
                 
-                safe_db_add(user_obj)  # add user to data base
-                login_user(user_obj)  # login user
+                safe_db_add(user_obj)  # Add user to data base
+                login_user(user_obj)  # Login user
                 
                 return redirect(url_for('userpage', username=signup_form.username.data))
 

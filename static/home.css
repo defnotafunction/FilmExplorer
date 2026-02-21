@@ -56,7 +56,6 @@ h1 {
 a {
   text-decoration: none;
 
-
 }
 
 form {
@@ -321,4 +320,10 @@ footer {
 .email {
   color: #dbe08f;
   text-decoration: underline;
+}
+
+.tab-container {
+  display: flex;
+  align-self: flex-start;
+  justify-content: flex-start;
 }
