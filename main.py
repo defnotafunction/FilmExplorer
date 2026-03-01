@@ -140,8 +140,7 @@ def random_movie():
 def media_page(media_type, media_name, media_id):
     like_form = LikeButton()
 
-    if (like_form.validate_on_submit()
-        and like_form.submit.data):
+    if like_form.validate_on_submit():
         new_media_obj = Media(user_id=current_user.id,
                           media_id=media_id,
                           media_type=media_type

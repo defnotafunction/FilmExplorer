@@ -38,7 +38,7 @@
     <form method="POST"
         action="{{ url_for('remove_liked', username=username, media_id=dict['id'], media_type=dict['type of media']) }}">
         {{remove_like_form.hidden_tag()}}
-        <button type="submit">Remove</button>
+        <button type="submit"><ion-icon name="heart-dislike-outline" size="large"></ion-icon></button>
     </form>
 
     {% endif %}

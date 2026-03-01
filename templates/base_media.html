@@ -16,7 +16,7 @@
 {%else%}
 <form method="POST">
     {{ like_form.hidden_tag() }}
-    {{ like_form.submit() }}
+    <button type="submit"><ion-icon name="heart" size="large"></ion-icon></button>
 </form>
 {% endif %}
 

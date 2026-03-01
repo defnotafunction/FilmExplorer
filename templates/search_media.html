@@ -31,7 +31,7 @@
     <form method="post"
       action="{{url_for('like_title_from_search', media_id=dict['id'], media_type=dict['type of media'], query=query, page_num=page_num)}}">
       {{like_form.hidden_tag()}}
-      {{like_form.submit()}}
+      <button type="submit"><ion-icon name="heart" size="large"></ion-icon></button>
     </form>
     {% elif dict['liked_status'] %}
     <p>In your likes!</p>

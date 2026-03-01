@@ -72,6 +72,14 @@ form {
   align-items: flex-start;
 }
 
+button:hover ion-icon[name='heart'] {
+  color: #ffbf00;
+}
+
+button:hover ion-icon[name='heart-dislike-outline'] {
+  color: white;
+}
+
 input {
   border: 2px solid white;
   outline: none;
@@ -221,18 +229,22 @@ div.header li {
 }
 
 button {
-  font-family: "Work Sans", sans-serif;
+  font-family: Roboto, sans-serif;
   font-size: 1.5rem;
-  color: black;
-  border: .2rem solid #11051a;
-  border-radius: 2.5rem;
-  background-color: #A8812A;
+  color: rgb(255, 255, 255);
+  background-color: transparent;
+  border: none;
   margin: 1rem;
+  padding: 1rem;
 }
 
 button:hover {
-  background-color: #11051a;
+  background-color: #9d9d9d53;
+  border-radius: 2rem;
+  cursor: pointer;
 }
+
+
 
 div.content {
   position: relative;
@@ -243,8 +255,7 @@ div.content {
 
 }
 
-div.content a:not(.email, .media-search-title, .tab-container, .media-search-image),
-#submit {
+div.content a:not(.email, .media-search-title, .tab-container, .media-search-image) {
   font-family: "Work Sans", sans-serif;
   font-size: 1.5rem;
   color: black;
@@ -258,8 +269,7 @@ div.content a:not(.email, .media-search-title, .tab-container, .media-search-ima
 
 }
 
-div.content a:hover:not(.email, .media-search-title, .tab-container, .media-search-image),
-#submit:hover {
+div.content a:hover:not(.email, .media-search-title, .tab-container, .media-search-image) {
   background-color: #291c20;
   color: white;
   cursor: pointer;
