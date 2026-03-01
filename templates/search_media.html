@@ -8,13 +8,36 @@
 <h1>Movies and Shows</h1>
 {% for dict in media_found %}
 <div class='{% if loop.index % 2 == 0 %}media1{% else %}media2{% endif %}'>
-  <h4>{{dict['title']}} ({{dict['release date'][:4]}})</h4>
-  <a href="{{url_for('media_page', media_name=dict['title'], media_id=dict['id'], media_type=dict['type of media'])}}">
-    <img src="https://image.tmdb.org/t/p/w92{{dict['poster_path']}}">
+  <h4 class="media-search-title-wrapper">
+    <a class='media-search-title' href="{{url_for('media_page',
+                      media_name=dict['title'],
+                      media_id=dict['id'],
+                      media_type=dict['type of media'])}}">
+      {{dict['title']}} ({{dict['release date'][:4]}})
+    </a>
+  </h4>
+
+  <a class='media-search-image'
+    href="{{url_for('media_page', media_name=dict['title'], media_id=dict['id'], media_type=dict['type of media'])}}">
+    <img src="https://image.tmdb.org/t/p/w185{{dict['poster_path']}}">
     <br>
     {{dict['title']}}
   </a>
-  <p data-id='search_info'>{{dict['overview'][:60]}}...</p>
+
+  <div class='media-search-info'>
+    <p>{{dict['rating']}}</p>
+    <p>{{dict['overview'][:60]}}...</p>
+    {% if dict['liked_status'] == True %}
+    <form method="post"
+      action="{{url_for('like_title_from_search', media_id=dict['id'], media_type=dict['type of media'], query=query, page_num=page_num)}}">
+      {{like_form.hidden_tag()}}
+      {{like_form.submit()}}
+    </form>
+    {% elif dict['liked_status'] %}
+    <p>In your likes!</p>
+    {% endif %}
+  </div>
+
 </div>
 {% endfor %}
 

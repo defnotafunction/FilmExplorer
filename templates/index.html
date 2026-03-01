@@ -1,13 +1,15 @@
 {% extends "preset.html" %}
 
 {% block content %}
-<h2>Welcome to FilmExplorer!</h2>
-    <i><b><p>We bring movies and shows to you!</p></b></i>
-    <a href="/find">
-        Find Media
-    </a>
-    
-    <a href="/search">
-        Browse TV
-    </a>
+<h2>Welcome.</h2>
+
+<p style="font-weight: bold; font-style: italic;">We bring movies and shows to you!</p>
+
+<a href="/find">
+    Find Media
+</a>
+
+<a href="{{url_for('browse')}}">
+    Browse TV
+</a>
 {% endblock %}

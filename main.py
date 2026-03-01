@@ -54,7 +54,7 @@ def recommended_media():
     
     if len(liked_ids) <= 2:
         flash("You don't have enough liked titles!", 'error')
-        redirect(url_for('find'))
+        return redirect(url_for('find'))
 
     recommended_ids = recommender.recommend(liked_ids)
     media_found = [
@@ -77,12 +77,12 @@ def browse():
         return redirect(url_for(
                                 'search_media',
                                 page_num=1,
-                                query=search_form.query.data))
+                                query=search_form.query.data)
+                                )
 
     return render_template(
                             'browse.html',
                             page_name='Browse',
-                            page_content='Browse movies and shows!',
                             form=search_form
                             )
 
@@ -90,23 +90,37 @@ def browse():
 def search_user(query):
     feteched_users = get_users_from_query(query)
     
-    return render_template('search_user.html',
-                            query=query,
-                           fetched_users=feteched_users)
+    return render_template(
+                        'search_user.html',
+                        query=query,
+                        fetched_users=feteched_users
+                        )
 
 
 @app.route('/search/<query>/<int:page_num>')
 def search_media(query, page_num):
-    # Returns a list with media names.
-
+    like_form = LikeButton()
     media_found = recommender.get_media_from_query(query, page_num)
     
+    for m in media_found: 
+        in_user_liked = check_media_obj_in_user_liked(m['id'], current_user)
+        
+        if not current_user:
+            m['liked_status'] = None  # Not logged in
+            continue
+
+        if in_user_liked:
+            m['liked_status'] = 'Already liked'
+        else:
+            m['liked_status'] = True  # Able to be liked
+
     return render_template(
         'search_media.html',
         media_found=media_found,
         page_name='Search',
         page_num=page_num,
-        query=query
+        query=query,
+        like_form=like_form
     )
 
 @app.route('/random-movie')
@@ -180,7 +194,8 @@ def userpage(username):
 
         liked_media.append(media_dict)
 
-    return render_template('user.html',
+    return render_template(
+                            'user.html',
                             username=username,
                             page_name='Account',
                             display_private=display_private_info,
@@ -244,6 +259,19 @@ def remove_liked(username, media_id, media_type):
         db.session.commit()
 
     return redirect(url_for('userpage', username=username))
+
+@login_required
+@app.route('/like/<int:media_id>/<media_type>/<query>/<page_num>', methods=['POST'])
+def like_title_from_search(media_id, media_type, query, page_num):
+    new_media_obj = Media(user_id=current_user.id,
+                          media_id=media_id,
+                          media_type=media_type
+                          )
+
+    current_user.liked_media.append(new_media_obj)
+    db.session.commit()
+
+    return redirect(url_for('search_media', query=query, page_num=page_num))
 
 
 @login_required

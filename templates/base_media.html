@@ -12,7 +12,7 @@
 {% if current_user.is_authenticated %}
 
 {% if check_media_obj_in_user_liked(media_id, current_user) %}
-<p>Movie already liked</p>
+<p>In your likes</p>
 {%else%}
 <form method="POST">
     {{ like_form.hidden_tag() }}

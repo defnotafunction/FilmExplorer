@@ -9,6 +9,30 @@
 <h4>Liked Titles:</h4>
 {% for dict in liked_media %}
 <div class='{% if loop.index % 2 == 0 %}media1{% else %}media2{% endif %}'>
+
+
+    <h4 class="media-search-title-wrapper">
+        <a class='media-search-title' href="{{url_for('media_page',
+                      media_name=dict['title'],
+                      media_id=dict['id'],
+                      media_type=dict['type of media'])}}">
+            {{dict['title']}} ({{dict['release date'][:4]}})
+        </a>
+    </h4>
+
+    <a class='media-search-image'
+        href="{{url_for('media_page', media_name=dict['title'], media_id=dict['id'], media_type=dict['type of media'])}}">
+        <img src="https://image.tmdb.org/t/p/w185{{dict['poster_path']}}">
+        <br>
+        {{dict['title']}}
+    </a>
+
+    <div class='media-search-info'>
+        <p>{{dict['rating']}}</p>
+        <p>{{dict['overview'][:60]}}...</p>
+
+    </div>
+
     <!-- Remove button -->
     {% if current_user.is_authenticated and current_user.username == username %}
     <form method="POST"
@@ -18,15 +42,6 @@
     </form>
 
     {% endif %}
-
-    <h4>{{dict['title']}} ({{dict['release date'][:4]}})</h4>
-    <a
-        href="{{url_for('media_page', media_name=dict['title'], media_id=dict['id'], media_type=dict['type of media'])}}">
-        <img src="https://image.tmdb.org/t/p/w92{{dict['poster_path']}}">
-        <br>
-        {{dict['title']}}
-    </a>
-    <p data-id='search_info'>{{dict['overview'][:60]}}...</p>
 </div>
 {% endfor %}
 

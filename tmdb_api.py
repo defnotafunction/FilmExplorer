@@ -178,10 +178,11 @@ class MediaRecommender:
         if not hasattr(self, '_genre_cache') or self._genre_cache is None:
             movies_genres = _get_genres_for_movies().get('genres', [])
             tv_genres = _get_genres_for_tv().get('genres', [])
-            
             self._genre_cache = {}
+            
             for genre in chain(movies_genres, tv_genres):
                 self._genre_cache[genre['id']] = genre['name']
+        
         return self._genre_cache
     
     def get_genre_from_id(self, genre_id: int) -> str:
@@ -310,6 +311,12 @@ class MediaRecommender:
     # TMDB isn't specific with its genres (no anime genre).
     # So, I added other features such as language and whether it's an adult film
     def vectorize_media_dict(self, media_dict) -> np.array:
+        """
+        Turns a dictionary of a media into a vector / numpy array by using one-hot encoding.
+        
+        :param media_dict: Dictionary of a media containing its metadata.
+        :return: A numpy array with 1s indicating that it contains this feature and 0s indicating it doesn't.
+        """
         genres = self._encode_genres(media_dict)
         language = self._encode_languages(media_dict)
 
