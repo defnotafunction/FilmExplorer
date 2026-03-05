@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, abort
-from tmdb_api import MediaRecommender, get_media_from_id, check_if_id_movie
+from tmdb_api import MediaRecommender, get_media_from_id
 from forms import *
 from extensions import db
 from models import *
@@ -50,7 +50,7 @@ def find():
 @app.route('/find/recommended-media')
 @login_required
 def recommended_media():
-    liked_ids = [l.media_id for l in current_user.liked_media]
+    liked_ids = [(l.media_id, l.media_type) for l in current_user.liked_media]
     
     if len(liked_ids) <= 2:
         flash("You don't have enough liked titles!", 'error')
@@ -59,9 +59,9 @@ def recommended_media():
     recommended_ids = recommender.recommend(liked_ids)
     media_found = [
                     recommender.format_media_dict(get_media_from_id(_id),
-                                                'movie' if check_if_id_movie(_id) else 'show'
+                                                type_of_media
                                                 )
-                    for _id in recommended_ids
+                    for (_id, type_of_media) in recommended_ids
                     ]
     
     return render_template('recommended_media.html',
