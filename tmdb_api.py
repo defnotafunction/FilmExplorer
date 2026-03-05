@@ -67,8 +67,10 @@ def get_media_from_id(media_id: int, type_of_media: str = 'movie'):
     :param type_of_media: Type of media ('movie' or 'tv').
     :return: Dictionary containing media metadata.
     """
+    
     if type_of_media == 'show':
         type_of_media = 'tv'
+
 
     url = f'https://api.themoviedb.org/3/{type_of_media}/{media_id}?api_key={api_key}&external_source=imdb_id'
     headers = {'accept': 'application/json'}
@@ -76,6 +78,7 @@ def get_media_from_id(media_id: int, type_of_media: str = 'movie'):
 
     if response.status_code == 200:  # Return the response if the id belongs to a movie.
         return response.json()
+
 
 
 def discover_movies(page_number: int = 1) -> dict:
@@ -111,7 +114,7 @@ def discover_shows(page_number: int = 1):
     :return: A dictionary, with a "result" key filled with dictionaries 
     with the metadata of the show. 
     """
-    url = "https://api.themoviedb.org/3/discover/movie"
+    url = "https://api.themoviedb.org/3/discover/tv"
 
     params = {
         "api_key": api_key,
@@ -338,16 +341,17 @@ class MediaRecommender:
         :param max_pages: The maximum amount of pages used in requesting the TMDB's API.
         :return: Returns three parallel lists.
         """
+        movies, shows = self._get_media(max_pages)
         media_vectors = []
         media_ids = []
         type_of_media = []
         
-        for m in self._get_media(max_pages)[0]:  # SELECTING MOVIES
+        for m in movies:  # SELECTING MOVIES
             media_vectors.append(self.vectorize_media_dict(m))
             media_ids.append(m['id'])
             type_of_media.append(0)
         
-        for m in self._get_media(max_pages)[1]:  # SELECTING MOVIES
+        for m in shows:  # SELECTING SHOWS
             media_vectors.append(self.vectorize_media_dict(m))
             media_ids.append(m['id'])
             type_of_media.append(1)
@@ -358,14 +362,16 @@ class MediaRecommender:
     def fit_model(self) -> None:
         self._model.fit(self._media_vectors)
 
-    def recommend(self, liked_ids: list[int], n_recommendations: int = 5) -> list[int]:
+    def recommend(self, liked_ids: list[int], n_recommendations: int = 10, type_of_media_to_recommend: str = None) -> list[int]:
         """
         Returns TMDB IDs of recommended movies based on liked IDs.
 
         :param liked_ids: List of tuples containing user's liked media's IDs and its type.
         :param n_recommendations: Number of recommendations to return.
+        :param type_of_media_to_recommend: Media with this type will be recommended.
         :return: List of recommended TMDB IDs.
         """
+        neighbors_to_fetch = min(n_recommendations ** 4, len(self._media_vectors))
         liked_media = [get_media_from_id(_id, type_of_m) for _id, type_of_m in liked_ids]
 
         liked_vectors = [self.vectorize_media_dict(m) for m in liked_media]
@@ -373,10 +379,36 @@ class MediaRecommender:
        
         # Liked movies themselves may appear in the neighbors, so +len(liked_ids).
         
-        distances, indices = self._model.kneighbors([liked_vector_mean], n_neighbors=n_recommendations + len(liked_ids)) 
-        all_rec_ids = [(self._media_ids[i], self.types_of_media[i]) for i in indices[0]]
+        distances, indices = self._model.kneighbors([liked_vector_mean], n_neighbors=neighbors_to_fetch)
+        all_rec_ids = []
 
-        recommended_ids = set([mid for mid in all_rec_ids if mid[0] not in liked_ids])
+        count_of_movies = 0
+        count_of_shows = 0
+
+        for i in indices[0]:
+            media_id = self._media_ids[i]
+            media_type = 'movie' if self.types_of_media[i] == 0 else 'show'
+
+            if type_of_media_to_recommend != 'all':
+                if media_type == type_of_media_to_recommend and media_id not in liked_ids:
+                    all_rec_ids.append((media_id, media_type))
+            
+            else:
+                if (count_of_shows < n_recommendations / 2
+                    and media_type == 'show') or (count_of_movies < n_recommendations / 2
+                    and media_type == 'movie'):
+                    all_rec_ids.append((media_id, media_type))
+
+                if media_type == 'movie':
+                    count_of_movies += 1
+                else:
+                    count_of_shows += 1
+
+            if len(all_rec_ids) >= n_recommendations:
+                break
+        
+
+        recommended_ids = set([mid for mid in all_rec_ids if mid not in liked_ids])
         recommended_ids = list(recommended_ids)
 
         return recommended_ids[:n_recommendations]

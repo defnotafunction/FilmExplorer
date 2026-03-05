@@ -1,7 +1,11 @@
 {% extends "preset.html" %}
 {% block content %}
 <div>
-    <a href="{{url_for('recommended_media')}}">Click me!</a>
+    <a href="{{url_for('recommended_media', media_filter='all')}}">Click me!</a>
+    <a href="{{url_for('recommended_media', media_filter='movie')}}">Only Movies</a>
+    <a href="{{url_for('recommended_media', media_filter='show')}}">Only Shows</a>
+
+
 
 </div>
 {%endblock%}

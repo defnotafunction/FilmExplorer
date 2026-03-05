@@ -47,18 +47,21 @@ def find():
                             page_content = 'Find media based on your likes!'
                             )
 
-@app.route('/find/recommended-media')
+@app.route('/find/recommended-media/<media_filter>')
 @login_required
-def recommended_media():
+def recommended_media(media_filter):
+    if media_filter not in ['show', 'movie', 'all']:
+        abort(404)
+
     liked_ids = [(l.media_id, l.media_type) for l in current_user.liked_media]
     
     if len(liked_ids) <= 2:
         flash("You don't have enough liked titles!", 'error')
         return redirect(url_for('find'))
 
-    recommended_ids = recommender.recommend(liked_ids)
+    recommended_ids = recommender.recommend(liked_ids, type_of_media_to_recommend=media_filter)
     media_found = [
-                    recommender.format_media_dict(get_media_from_id(_id),
+                    recommender.format_media_dict(get_media_from_id(_id, type_of_media),
                                                 type_of_media
                                                 )
                     for (_id, type_of_media) in recommended_ids
