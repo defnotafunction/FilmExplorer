@@ -1,9 +1,13 @@
 {% extends "preset.html" %}
 {% block content %}
+
 <form method="POST">
     {{form.hidden_tag()}}
     {{form.query.label}}
-    {{form.query()}}
-    {{form.search_button()}}
+    <div class="search-container">
+        {{form.query()}}
+        {{form.search_button()}}
+    </div>
 </form>
+
 {% endblock %}

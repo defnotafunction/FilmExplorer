@@ -37,3 +37,10 @@ class RemoveLike(FlaskForm):
     RemoveLike form. Used to remove media from a user's liked list.
     """
     submit = SubmitField('Remove')
+
+class DeleteUserForm(FlaskForm):
+    """
+    Form to delete a user, only used by admins.
+    """
+    query = StringField('Delete a user.')
+    submit = SubmitField('DELETE')

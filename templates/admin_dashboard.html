@@ -1,0 +1,10 @@
+{% extends "preset.html" %}
+{% block content %}
+<h4>Welcome Admin.</h4>
+<form method="post">
+    {{delete_form.hidden_tag()}}
+    {{delete_form.query.label}}
+    {{delete_form.query()}}
+    {{delete_form.submit()}}
+</form>
+{% endblock %}

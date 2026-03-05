@@ -212,7 +212,9 @@ div.header li a {
 
 
 
-div.header li a:hover {
+div.header li a:hover,
+#search_button:hover,
+#submit:hover {
   background-color: #4b4b4b21;
   border-radius: 2rem;
 }
@@ -228,7 +230,9 @@ div.header li {
 
 }
 
-button {
+button,
+#submit,
+#search_button {
   font-family: Roboto, sans-serif;
   font-size: 1.5rem;
   color: rgb(255, 255, 255);
@@ -238,13 +242,17 @@ button {
   padding: 1rem;
 }
 
-button:hover {
+button:hover,
+#submit:hover,
+#search_button:hover {
   background-color: #9d9d9d53;
   border-radius: 2rem;
   cursor: pointer;
 }
 
-
+div.search-container {
+  display: inline-block;
+}
 
 div.content {
   position: relative;

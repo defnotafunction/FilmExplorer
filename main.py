@@ -103,12 +103,14 @@ def search_media(query, page_num):
     media_found = recommender.get_media_from_query(query, page_num)
     
     for m in media_found: 
-        in_user_liked = check_media_obj_in_user_liked(m['id'], current_user)
+            
         
-        if not current_user:
+        if not current_user.is_authenticated:
             m['liked_status'] = None  # Not logged in
             continue
 
+        in_user_liked = check_media_obj_in_user_liked(m['id'], current_user)
+        
         if in_user_liked:
             m['liked_status'] = 'Already liked'
         else:
@@ -211,6 +213,11 @@ def login():
    
 
     if login_form.validate_on_submit():
+        if not check_if_user_exists(login_form.username.data):
+            print('user dont exist')
+            flash('User does not exist!', 'error')
+            return redirect(url_for('login'))
+
         user_to_login = get_user_from_username(login_form.username.data)
 
         if check_password_hash(user_to_login.hashed_password, login_form.password.data):
@@ -218,7 +225,7 @@ def login():
             return redirect(url_for('userpage', username=user_to_login.username))
         
         flash('Wrong username or password', 'error')
-
+        redirect(url_for('login'))
 
     return render_template('login.html', page_name = 'Login', form=login_form)
 
@@ -228,17 +235,23 @@ def signup():
 
     if signup_form.validate_on_submit():
             if not check_if_user_exists(signup_form.username.data):
-                user_obj = User(username=signup_form.username.data,
-                                hashed_password=generate_password_hash(signup_form.password.data)
+                user_obj = User(
+                    username=signup_form.username.data,
+                    hashed_password=generate_password_hash(signup_form.password.data)
                                 )  # Create a new user
                 
+                # TEMPORARY
+                if user_obj.username == 'aiden':
+                    user_obj.role = 'admin'
+
                 safe_db_add(user_obj)  # Add user to data base
                 login_user(user_obj)  # Login user
                 
                 return redirect(url_for('userpage', username=signup_form.username.data))
 
             flash('Username already in use!', 'error')
-            
+            return redirect(url_for('signup'))
+
     return render_template('login.html', page_name = 'Sign Up', form=signup_form)
 
 @app.route('/user/<username>/remove-liked/<int:media_id>/<media_type>', methods=['POST'])
@@ -262,15 +275,35 @@ def remove_liked(username, media_id, media_type):
 @login_required
 @app.route('/like/<int:media_id>/<media_type>/<query>/<page_num>', methods=['POST'])
 def like_title_from_search(media_id, media_type, query, page_num):
-    new_media_obj = Media(user_id=current_user.id,
-                          media_id=media_id,
-                          media_type=media_type
+    new_media_obj = Media(
+                        user_id=current_user.id,
+                        media_id=media_id,
+                        media_type=media_type
                           )
 
     current_user.liked_media.append(new_media_obj)
     db.session.commit()
 
     return redirect(url_for('search_media', query=query, page_num=page_num))
+
+@login_required
+@app.route('/admin', methods=['GET', 'POST'])
+def admin():
+    # TESTING ADMIN ROUTE
+    delete_user_form = DeleteUserForm()
+
+    if current_user.role != 'admin':
+        abort(403)
+
+    if delete_user_form.validate_on_submit():
+        delete_user_from_name(delete_user_form.query.data)
+
+    return render_template(
+                            'admin_dashboard.html',
+                            page_name='Admin Dashboard',
+                            page_content='no exploting power pls',
+                            delete_form = delete_user_form
+                            )
 
 
 @login_required

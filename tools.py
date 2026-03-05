@@ -67,3 +67,14 @@ def get_users_from_query(query: str) -> list[User]:
         select(User).where(User.username.contains(query))
     ).scalars().all()
     return fetched_users
+
+def delete_user_from_name(username: str) -> None:
+    """
+    Deletes a user using their username
+    :param username: The user's username
+    :return: None
+    """
+
+    user_to_delete = get_users_from_query(username)[0]
+    db.session.delete(user_to_delete)
+    db.session.commit()
